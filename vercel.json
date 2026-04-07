@@ -1,17 +1,9 @@
 {
   "version": 2,
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/sign",
-      "destination": "/public/sign.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/public/$1"
-    }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/sign", "destination": "/public/sign.html" },
+    { "source": "/sign/:path*", "destination": "/public/sign.html" },
+    { "source": "/(.*)", "destination": "/public/$1" }
   ]
 }
