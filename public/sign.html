@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BNCT 작업허가서 서명</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans KR',sans-serif; background:#f0f4f8; color:#1a2332; min-height:100vh; }
+
+.header {
+  background:linear-gradient(135deg,#003087,#1565c0);
+  padding:16px 24px;
+  display:flex; align-items:center; gap:12px;
+}
+.header-logo { font-family:'Arial Black',sans-serif; font-size:22px; font-weight:900; color:#00bcd4; letter-spacing:3px; }
+.header-title { font-size:13px; color:rgba(255,255,255,0.75); }
+
+.container { max-width:800px; margin:32px auto; padding:0 16px 60px; }
+
+.info-card {
+  background:white; border-radius:12px; padding:24px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.08); margin-bottom:24px;
+  border-left:4px solid #003087;
+}
+.info-card h2 { font-size:18px; color:#003087; margin-bottom:16px; }
+.info-table { width:100%; border-collapse:collapse; font-size:14px; }
+.info-table td { padding:8px 12px; border:1px solid #e8edf3; }
+.info-table td:first-child { background:#f5f7fa; font-weight:700; color:#555; width:100px; }
+
+.section-card {
+  background:white; border-radius:12px; padding:24px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.08); margin-bottom:20px;
+}
+.section-title {
+  font-size:15px; font-weight:700; color:white;
+  background:#003087; padding:10px 16px; margin:-24px -24px 20px;
+  border-radius:12px 12px 0 0;
+}
+
+.check-list { list-style:none; }
+.check-list li {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:6px 0; font-size:13px; line-height:1.6;
+  border-bottom:1px solid #f0f4f8;
+}
+.check-list li:last-child { border-bottom:none; }
+.check-list li input[type=checkbox] { margin-top:3px; flex-shrink:0; width:16px; height:16px; cursor:pointer; }
+
+.sig-row { display:flex; gap:16px; margin-top:20px; flex-wrap:wrap; }
+.sig-item { flex:1; min-width:140px; }
+.sig-label { font-size:11px; font-weight:700; color:#555; margin-bottom:6px; }
+.sig-item input[type=text], .sig-item input[type=date], .sig-item input[type=time] {
+  width:100%; padding:8px 10px; border:1px solid #cbd5e0; border-radius:6px;
+  font-size:13px; font-family:inherit; background:#f8faff; color:#003087; font-weight:700;
+}
+.sig-item input[readonly] { cursor:default; }
+
+.sig-area {
+  border:2px solid #cbd5e0; border-radius:6px; position:relative;
+  background:#fafafa; cursor:crosshair; overflow:hidden;
+}
+.sig-canvas { display:block; width:100%; height:80px; }
+.sig-hint {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:12px; color:#aaa; pointer-events:none;
+}
+.sig-clear {
+  position:absolute; top:4px; right:4px;
+  background:#fee2e2; color:#c62828; border:none; border-radius:4px;
+  font-size:11px; padding:2px 8px; cursor:pointer; font-family:inherit;
+}
+
+.badge {
+  display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px;
+  font-weight:700; margin-left:8px;
+}
+.badge-blue { background:#e8f0fe; color:#1565c0; }
+.badge-green { background:#e8f5e9; color:#2e7d32; }
+
+.btn-submit {
+  width:100%; padding:16px; background:linear-gradient(135deg,#003087,#1565c0);
+  color:white; border:none; border-radius:10px; font-size:16px; font-weight:700;
+  font-family:inherit; cursor:pointer; letter-spacing:1px;
+  box-shadow:0 4px 16px rgba(0,48,135,0.3); transition:all 0.2s;
+  margin-top:8px;
+}
+.btn-submit:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,48,135,0.4); }
+.btn-submit:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.loading {
+  display:none; position:fixed; inset:0; background:rgba(0,48,135,0.6);
+  align-items:center; justify-content:center; z-index:9999;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.loading-box {
+  background:white; border-radius:16px; padding:40px 56px; text-align:center;
+}
+.loading-spinner {
+  width:48px; height:48px; border:4px solid #e8edf3; border-top-color:#003087;
+  border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.error-box {
+  background:#fee2e2; border-left:4px solid #c62828; border-radius:8px;
+  padding:16px 20px; font-size:14px; color:#c62828; margin-bottom:20px;
+  display:none;
+}
+
+.success-box {
+  display:none; position:fixed; inset:0; background:rgba(0,48,135,0.7);
+  align-items:center; justify-content:center; z-index:9999;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.success-inner {
+  background:white; border-radius:20px; padding:48px 56px; text-align:center;
+  max-width:420px; width:90%;
+}
+.success-icon { font-size:56px; margin-bottom:16px; }
+.success-title { font-size:24px; font-weight:900; color:#003087; margin-bottom:8px; }
+.success-desc { font-size:14px; color:#666; }
+
+.expired-msg {
+  text-align:center; padding:80px 24px; color:#999;
+}
+.expired-icon { font-size:64px; margin-bottom:20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">BNCT</div>
+  <div class="header-title">자산관리팀 안전서류 통합관리 시스템</div>
+</div>
+
+<div class="loading" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <div id="loadingText" style="font-size:15px;color:#003087;font-weight:700;">서명 저장 중...</div>
+  </div>
+</div>
+
+<div class="success-box" id="successBox">
+  <div class="success-inner">
+    <div class="success-icon">✅</div>
+    <div class="success-title">서명 완료!</div>
+    <div class="success-desc" style="margin-top:8px;">서명이 성공적으로 저장되었습니다.<br>이 창을 닫으셔도 됩니다.</div>
+  </div>
+</div>
+
+<div class="container" id="mainContainer">
+  <div class="error-box" id="errorBox"></div>
+  <div id="pageContent" style="display:none;">
+
+    <!-- 서류 정보 -->
+    <div class="info-card">
+      <h2>작업허가서 서명 요청</h2>
+      <table class="info-table">
+        <tr><td>공사명</td><td id="infoProject">-</td></tr>
+        <tr><td>업체명</td><td id="infoCompany">-</td></tr>
+        <tr><td>작업인원</td><td id="infoWorker">-</td></tr>
+        <tr><td>제출일시</td><td id="infoDate">-</td></tr>
+      </table>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="section-card">
+      <div class="section-title">
+        Section 3: 작업업체 검토 (업무담당자 작성)
+        <span class="badge badge-blue">서명 필요</span>
+      </div>
+      <ul class="check-list" id="sec3checks">
+        <li><input type="checkbox" id="c3-1"><span>본인은, 위험성 평가 및 필요한 관리 양식을 포함하여 관련된 모든 문서들의 내용을 검토하였으며 작업 업체/작업자에게 의견을 제시하였다.</span></li>
+        <li><input type="checkbox" id="c3-2"><span>본인은, 작업 업체/작업자를 담당하는 자로서, 작업 방식과 제안된 관리방안들이 시행되는 것을 모니터링하여 BNCT 터미널 안전 기준이 달성될 수 있도록 할 것이다.</span></li>
+        <li><input type="checkbox" id="c3-3"><span>본인은, 해당 작업 구역의 관련자에게 작업 시행 구간, 작업 업체/작업자가 완결해야 할 모든 작업 내역, 작업 관리감독 및 강화를 위해 수립된 절차들에 대한 정보를 알려주었다.</span></li>
+      </ul>
+      <div class="sig-row">
+        <div class="sig-item">
+          <div class="sig-label">이름</div>
+          <input type="text" id="s3Name" readonly>
+        </div>
+        <div class="sig-item" style="flex:2;">
+          <div class="sig-label">서명</div>
+          <div class="sig-area">
+            <canvas class="sig-canvas" id="sigCanvas3"></canvas>
+            <div class="sig-hint" id="sigHint3">여기에 서명하세요</div>
+            <button class="sig-clear" onclick="clearSig(3)">지우기</button>
+          </div>
+        </div>
+        <div class="sig-item">
+          <div class="sig-label">날짜</div>
+          <input type="date" id="s3Date" readonly>
+        </div>
+        <div class="sig-item">
+          <div class="sig-label">시간</div>
+          <input type="time" id="s3Time" readonly>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="section-card">
+      <div class="section-title">
+        Section 4: 승인 (작업허가 승인 담당자)
+        <span class="badge badge-green">이병문 담당</span>
+      </div>
+      <ul class="check-list">
+        <li><input type="checkbox" id="c4-1"><span>본인은, 위험성 평가를 비롯하여 필요한 관리 양식을 포함한 모든 관련 문서 내용을 검토하였다.</span></li>
+        <li><input type="checkbox" id="c4-2"><span>본인은 당 작업 허가서를 등록하고, 작업 번호를 부여하였으며, 관련된 모든 문서 상에 해당 작업 번호를 기입하였다.</span></li>
+      </ul>
+      <div class="sig-row">
+        <div class="sig-item">
+          <div class="sig-label">이름</div>
+          <input type="text" id="s4Name" value="이병문" readonly>
+        </div>
+        <div class="sig-item" style="flex:2;">
+          <div class="sig-label">서명</div>
+          <div class="sig-area">
+            <canvas class="sig-canvas" id="sigCanvas4"></canvas>
+            <div class="sig-hint" id="sigHint4">여기에 서명하세요</div>
+            <button class="sig-clear" onclick="clearSig(4)">지우기</button>
+          </div>
+        </div>
+        <div class="sig-item">
+          <div class="sig-label">날짜</div>
+          <input type="date" id="s4Date" readonly>
+        </div>
+        <div class="sig-item">
+          <div class="sig-label">시간</div>
+          <input type="time" id="s4Time" readonly>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="btnSubmit" onclick="submitSig()">서명 완료 및 저장</button>
+  </div>
+</div>
+
+<script>
+var TOKEN = new URLSearchParams(location.search).get('token');
+var permitData = null;
+
+// 날짜/시간 자동
+var now = new Date();
+var p2 = function(n){ return String(n).padStart(2,'0'); };
+var today = now.getFullYear()+'-'+p2(now.getMonth()+1)+'-'+p2(now.getDate());
+var nowTime = p2(now.getHours())+':'+p2(now.getMinutes());
+
+// 서명 패드 초기화
+function initSigPad(canvasId, hintId) {
+  var canvas = document.getElementById(canvasId);
+  var ctx = canvas.getContext('2d');
+  var drawing = false, lx = 0, ly = 0;
+  ctx.strokeStyle = '#003087'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+
+  function getPos(e) {
+    var r = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / r.width;
+    var scaleY = canvas.height / r.height;
+    if(e.touches) return { x:(e.touches[0].clientX-r.left)*scaleX, y:(e.touches[0].clientY-r.top)*scaleY };
+    return { x:(e.clientX-r.left)*scaleX, y:(e.clientY-r.top)*scaleY };
+  }
+  canvas.addEventListener('mousedown', function(e){ drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
+  canvas.addEventListener('mousemove', function(e){
+    if(!drawing) return;
+    var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke();
+    lx=p.x; ly=p.y; document.getElementById(hintId).style.display='none';
+  });
+  canvas.addEventListener('mouseup', function(){ drawing=false; });
+  canvas.addEventListener('mouseleave', function(){ drawing=false; });
+  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
+  canvas.addEventListener('touchmove', function(e){
+    e.preventDefault(); if(!drawing) return;
+    var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke();
+    lx=p.x; ly=p.y; document.getElementById(hintId).style.display='none';
+  });
+  canvas.addEventListener('touchend', function(){ drawing=false; });
+}
+
+function clearSig(n) {
+  var canvas = document.getElementById('sigCanvas'+n);
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById('sigHint'+n).style.display='flex';
+}
+
+function isSigEmpty(canvasId) {
+  var canvas = document.getElementById(canvasId);
+  var data = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+  return !data.some(function(v,i){ return i%4!==3 && v>0; });
+}
+
+// 캔버스 크기 초기화
+function resizeCanvas(canvasId) {
+  var canvas = document.getElementById(canvasId);
+  var rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = 80;
+}
+
+// 데이터 로드
+async function loadPermit() {
+  if(!TOKEN) {
+    showError('유효하지 않은 링크입니다.');
+    return;
+  }
+  try {
+    document.getElementById('loadingOverlay').style.display='flex';
+    document.getElementById('loadingText').textContent='서류 불러오는 중...';
+
+    var res = await fetch('/api/get-permit?token='+TOKEN);
+    var data = await res.json();
+
+    document.getElementById('loadingOverlay').style.display='none';
+
+    if(!res.ok || !data.permit) {
+      showError(data.error || '서류를 불러올 수 없습니다.');
+      return;
+    }
+
+    permitData = data.permit;
+
+    // 정보 표시
+    document.getElementById('infoProject').textContent = permitData.project_name || '-';
+    document.getElementById('infoCompany').textContent = permitData.company_name || '-';
+    document.getElementById('infoWorker').textContent = (permitData.worker_count || '-') + '명';
+    document.getElementById('infoDate').textContent = permitData.submit_date || '-';
+
+    // Section 3 이름 (담당자)
+    var managers = [];
+    try { managers = JSON.parse(permitData.managers || '[]'); } catch(e){}
+    var managerNames = managers.map(function(m){ return m.name; }).join(', ');
+    document.getElementById('s3Name').value = managerNames;
+
+    // 날짜/시간 자동
+    document.getElementById('s3Date').value = today;
+    document.getElementById('s3Time').value = nowTime;
+    document.getElementById('s4Date').value = today;
+    document.getElementById('s4Time').value = nowTime;
+
+    // 서명 캔버스 초기화
+    setTimeout(function(){
+      resizeCanvas('sigCanvas3');
+      resizeCanvas('sigCanvas4');
+      initSigPad('sigCanvas3','sigHint3');
+      initSigPad('sigCanvas4','sigHint4');
+    }, 100);
+
+    document.getElementById('pageContent').style.display='block';
+
+  } catch(e) {
+    document.getElementById('loadingOverlay').style.display='none';
+    showError('네트워크 오류: '+e.message);
+  }
+}
+
+async function submitSig() {
+  // 체크박스 확인
+  var allChecked = ['c3-1','c3-2','c3-3','c4-1','c4-2'].every(function(id){
+    return document.getElementById(id).checked;
+  });
+  if(!allChecked) {
+    alert('Section 3, 4의 모든 항목에 체크해 주세요.');
+    return;
+  }
+
+  // 서명 확인
+  if(isSigEmpty('sigCanvas3')) {
+    alert('Section 3 서명을 해주세요.');
+    return;
+  }
+  if(isSigEmpty('sigCanvas4')) {
+    alert('Section 4 서명을 해주세요.');
+    return;
+  }
+
+  document.getElementById('loadingOverlay').style.display='flex';
+  document.getElementById('loadingText').textContent='서명 저장 중...';
+  document.getElementById('btnSubmit').disabled=true;
+
+  try {
+    var sig3 = document.getElementById('sigCanvas3').toDataURL('image/png');
+    var sig4 = document.getElementById('sigCanvas4').toDataURL('image/png');
+
+    // Supabase에 서명 저장
+    var res = await fetch('/api/save-signature', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: TOKEN,
+        section3: {
+          name: document.getElementById('s3Name').value,
+          signature: sig3,
+          date: document.getElementById('s3Date').value,
+          time: document.getElementById('s3Time').value,
+          checks: ['c3-1','c3-2','c3-3'].map(function(id){ return document.getElementById(id).checked; })
+        },
+        section4: {
+          name: '이병문',
+          signature: sig4,
+          date: document.getElementById('s4Date').value,
+          time: document.getElementById('s4Time').value,
+          checks: ['c4-1','c4-2'].map(function(id){ return document.getElementById(id).checked; })
+        }
+      })
+    });
+
+    document.getElementById('loadingOverlay').style.display='none';
+
+    if(res.ok) {
+      document.getElementById('successBox').style.display='flex';
+    } else {
+      var err = await res.json();
+      throw new Error(err.error || '저장 실패');
+    }
+
+  } catch(e) {
+    document.getElementById('loadingOverlay').style.display='none';
+    document.getElementById('btnSubmit').disabled=false;
+    alert('오류: '+e.message);
+  }
+}
+
+function showError(msg) {
+  var box = document.getElementById('errorBox');
+  box.textContent = '⚠ '+msg;
+  box.style.display='block';
+}
+
+loadPermit();
+</script>
+</body>
+</html>
