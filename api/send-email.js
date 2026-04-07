@@ -1,12 +1,12 @@
 const nodemailer = require('nodemailer');
-
+ 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
+ 
   try {
     const {
       recipients, ccRecipients,
@@ -14,11 +14,11 @@ module.exports = async function handler(req, res) {
       projectName, companyName, workerCount, submitDate, docCount,
       signingUrl
     } = req.body;
-
+ 
     if (!recipients || !pdfBase64) {
       return res.status(400).json({ error: '필수 데이터 누락' });
     }
-
+ 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -26,30 +26,20 @@ module.exports = async function handler(req, res) {
         pass: process.env.GMAIL_APP_PASSWORD,
       },
     });
-
+ 
     const pdfBuffer = Buffer.from(pdfBase64, 'base64');
     const ccList = (ccRecipients || []).map(r => `"${r.name}" <${r.email}>`).join(', ');
     const toList = recipients.map(r => `"${r.name}" <${r.email}>`).join(', ');
-
-    // 서명 링크 버튼 HTML
+ 
+    // 서명 링크 HTML - 심플 텍스트 링크
     const signingBtnHtml = signingUrl ? `
-      <div style="margin: 24px 0; text-align: center;">
-        <a href="${signingUrl}" style="
-          display: inline-block;
-          background: linear-gradient(135deg, #003087, #1565c0);
-          color: white;
-          padding: 14px 36px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-size: 15px;
-          font-weight: 700;
-          letter-spacing: 0.5px;
-          box-shadow: 0 4px 12px rgba(0,48,135,0.3);
-        ">서명하러 가기 (Section 3~4)</a>
-        <div style="margin-top: 8px; font-size: 11px; color: #aaa;">링크 유효기간: 7일</div>
+      <div style="margin: 20px 0; padding: 16px; border: 1px solid #cccccc; border-radius: 6px; background: #f9f9f9;">
+        <div style="font-size: 14px; font-weight: 700; color: #000000; margin-bottom: 8px;">서명하러 가기</div>
+        <a href="${signingUrl}" target="_blank" style="font-size: 13px; color: #000000; word-break: break-all;">${signingUrl}</a>
+        <div style="margin-top: 6px; font-size: 11px; color: #666666;">링크 유효기간: 7일</div>
       </div>
     ` : '';
-
+ 
     const htmlBody = `
       <div style="font-family: 'Noto Sans KR', Arial, sans-serif; max-width: 620px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #003087, #1565c0); padding: 24px 32px; border-radius: 8px 8px 0 0;">
@@ -78,7 +68,7 @@ module.exports = async function handler(req, res) {
         </div>
       </div>
     `;
-
+ 
     await transporter.sendMail({
       from: `"BNCT 안전서류 시스템" <${process.env.GMAIL_USER}>`,
       to: toList,
@@ -91,9 +81,9 @@ module.exports = async function handler(req, res) {
         contentType: 'application/pdf',
       }],
     });
-
+ 
     return res.status(200).json({ success: true });
-
+ 
   } catch (error) {
     console.error('이메일 발송 오류:', error);
     return res.status(500).json({ error: error.message });
