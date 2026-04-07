@@ -760,6 +760,27 @@ function showSection(id) {
   state.activeDoc=id;
 }
 
+// ── 폼 데이터 수집 ──────────────────────────────────
+function collectFormFields() {
+  var permitPage = document.getElementById('page-permit-main');
+  if(!permitPage) return {};
+  var fields = {};
+  // 모든 input, textarea 수집
+  permitPage.querySelectorAll('input[type="text"], input[type="date"], input[type="time"], textarea').forEach(function(el, i) {
+    var key = el.id || ('field_' + i);
+    fields[key] = el.value || '';
+  });
+  // 체크박스 수집
+  permitPage.querySelectorAll('input[type="checkbox"]').forEach(function(el, i) {
+    var key = el.id || ('check_' + i);
+    fields[key] = el.checked;
+  });
+  // Section 2 서명 이미지
+  var sig2 = permitPage.querySelector('#s2-sig canvas, .sig-canvas');
+  if(sig2) fields['sig2_img'] = sig2.toDataURL('image/png');
+  return fields;
+}
+
 // ── 날짜/시간 자동입력 ──────────────────────────────────
 function autoFillDates() {
   var now = new Date();
@@ -877,7 +898,10 @@ async function doSubmit(recipients) {
     // ② PDF → Base64 변환
     var pdfBase64 = pdf.output('datauristring').split(',')[1];
 
-    // ③ 서명 링크 생성 (Supabase)
+    // ③ 폼 데이터 수집 (Section 1~2 입력값)
+    var formFields = collectFormFields();
+
+    // ④ 서명 링크 생성 (Supabase - PDF + 폼데이터 저장)
     var signingUrl = null;
     try {
       showLoadingOverlay(true, '서명 링크 생성 중...');
@@ -890,7 +914,8 @@ async function doSubmit(recipients) {
           workerCount: workerCount,
           submitDate: dateStr,
           managers: recipients,
-          formData: { section3Name: recipients.map(function(r){return r.name;}).join(', ') }
+          formFields: formFields,
+          pdfBase64: pdfBase64,
         })
       });
       if(linkRes.ok) {
