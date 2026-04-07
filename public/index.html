@@ -762,22 +762,30 @@ function showSection(id) {
 
 // ── 폼 데이터 수집 ──────────────────────────────────
 function collectFormFields() {
-  var permitPage = document.getElementById('page-permit-main');
-  if(!permitPage) return {};
+  // 작업허가서 페이지 찾기 (permit-main)
+  var permitPage = document.getElementById('section-permit-main');
+  if(!permitPage) permitPage = document.querySelector('.doc-section[id*="permit"]');
+  if(!permitPage) permitPage = document.getElementById('formsContainer');
   var fields = {};
+  if(!permitPage) return fields;
+
   // 모든 input, textarea 수집
-  permitPage.querySelectorAll('input[type="text"], input[type="date"], input[type="time"], textarea').forEach(function(el, i) {
-    var key = el.id || ('field_' + i);
-    fields[key] = el.value || '';
+  permitPage.querySelectorAll('input[type="text"], input[type="date"], input[type="time"], textarea, input[type="number"]').forEach(function(el) {
+    if(el.id) fields[el.id] = el.value || '';
+    else if(el.name) fields[el.name] = el.value || '';
   });
   // 체크박스 수집
   permitPage.querySelectorAll('input[type="checkbox"]').forEach(function(el, i) {
-    var key = el.id || ('check_' + i);
+    var key = el.id || ('chk_permit_' + i);
     fields[key] = el.checked;
   });
-  // Section 2 서명 이미지
-  var sig2 = permitPage.querySelector('#s2-sig canvas, .sig-canvas');
-  if(sig2) fields['sig2_img'] = sig2.toDataURL('image/png');
+  // Section 2 서명
+  var sig2canvas = document.getElementById('s2-sig');
+  if(sig2canvas) {
+    var imgData = sig2canvas.toDataURL('image/png');
+    var empty = !sig2canvas.getContext('2d').getImageData(0,0,sig2canvas.width,sig2canvas.height).data.some(function(v,i){ return i%4!==3&&v>0; });
+    if(!empty) fields['sig2_img'] = imgData;
+  }
   return fields;
 }
 
@@ -1209,12 +1217,12 @@ function buildPermitForm(f) {
   // Section 1
   +'<div class="permit-section"><div class="permit-section-title" style="font-size:13px;">Section 1: 일반 사항</div>'
   +'<table class="permit-table" style="font-size:12px;">'
-  +'<tr><th style="font-size:12px;width:110px;">작업명</th><td><input type="text" value="'+proj+'" placeholder="작업명 입력" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
-  +'<tr><th style="font-size:12px;">작업 장소</th><td><input type="text" placeholder="작업 장소 입력" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
-  +'<tr><th style="font-size:12px;">작업 업체</th><td><input type="text" value="'+comp+'" placeholder="작업 업체명" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
+  +'<tr><th style="font-size:12px;width:110px;">작업명</th><td><input id="s1-work" type="text" value="'+proj+'" placeholder="작업명 입력" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
+  +'<tr><th style="font-size:12px;">작업 장소</th><td><input id="s1-place" type="text" placeholder="작업 장소 입력" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
+  +'<tr><th style="font-size:12px;">작업 업체</th><td><input id="s1-company" type="text" value="'+comp+'" placeholder="작업 업체명" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
   +'<tr><th style="font-size:12px;">예상 작업 기간</th><td><div style="display:flex;align-items:center;gap:6px;font-size:12px;">'
-  +'<input type="date" style="width:130px;border:none;border-bottom:1px solid #ddd;outline:none;font-size:12px;font-family:inherit;"> 부터 '
-  +'<input type="date" style="width:130px;border:none;border-bottom:1px solid #ddd;outline:none;font-size:12px;font-family:inherit;"> 까지</div></td></tr>'
+  +'<input id="s1-from" type="date" style="width:130px;border:none;border-bottom:1px solid #ddd;outline:none;font-size:12px;font-family:inherit;"> 부터 '
+  +'<input id="s1-to" type="date" style="width:130px;border:none;border-bottom:1px solid #ddd;outline:none;font-size:12px;font-family:inherit;"> 까지</div></td></tr>'
   +'</table></div>'
 
   // 고위험군 작업 체크
