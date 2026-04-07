@@ -335,12 +335,25 @@ function renderForm() {
   // Section 1 (읽기전용)
   html += '<div class="permit-section"><div class="permit-section-title">Section 1: 일반 사항 <span class="readonly-overlay">작성 완료 (읽기전용)</span></div>';
   html += '<table class="permit-table">';
-  html += '<tr><th>작업명</th><td>'+tinput('s1-work', proj, true)+'</td></tr>';
-  html += '<tr><th>작업 장소</th><td>'+tinput('s1-place', fields['s1-place']||'', true)+'</td></tr>';
-  html += '<tr><th>작업 업체</th><td>'+tinput('s1-company', comp, true)+'</td></tr>';
+  // fields에서 값 복원 (여러 가능한 키 이름으로 시도)
+  var s1work = fields['s1-work'] || proj || '';
+  var s1place = fields['s1-place'] || '';
+  var s1company = fields['s1-company'] || comp || '';
+  var s1from = fields['s1-from'] || today;
+  var s1to = fields['s1-to'] || '';
+  // field_N 형태 키도 확인 (id 없는 경우)
+  Object.keys(fields).forEach(function(k){
+    if(k.startsWith('field_')) {
+      // 순서 기반 복원은 어려우므로 무시
+    }
+  });
+
+  html += '<tr><th>작업명</th><td>'+tinput('s1-work', s1work, true)+'</td></tr>';
+  html += '<tr><th>작업 장소</th><td>'+tinput('s1-place', s1place, true)+'</td></tr>';
+  html += '<tr><th>작업 업체</th><td>'+tinput('s1-company', s1company, true)+'</td></tr>';
   html += '<tr><th>예상 작업 기간</th><td><div style="display:flex;align-items:center;gap:6px;font-size:12px;">'
-    +'<input type="date" id="s1-from" value="'+(fields['s1-from']||today)+'" readonly style="width:130px;border:none;background:#f8faff;outline:none;font-size:12px;font-family:inherit;"> 부터 '
-    +'<input type="date" id="s1-to" value="'+(fields['s1-to']||'')+'" readonly style="width:130px;border:none;background:#f8faff;outline:none;font-size:12px;font-family:inherit;"> 까지</div></td></tr>';
+    +'<input type="date" id="s1-from" value="'+s1from+'" readonly style="width:130px;border:none;background:#f8faff;outline:none;font-size:12px;font-family:inherit;"> 부터 '
+    +'<input type="date" id="s1-to" value="'+s1to+'" readonly style="width:130px;border:none;background:#f8faff;outline:none;font-size:12px;font-family:inherit;"> 까지</div></td></tr>';
   html += '</table></div>';
 
   // 고위험군 (읽기전용)
@@ -358,7 +371,23 @@ function renderForm() {
   html += '<div style="margin-bottom:4px;">본인은 고위험군 작업을 한 허가를 요청하는 사람으로써, 다음 사항을 확인한다.</div>';
   items2.forEach(function(i){ html += roCheck(true)+i+'</label>'; });
   html += '</div>';
-  html += sigRow('s2', fields['s2-name']||'', fields['s2-date']||today, fields['s2-time']||nowTime, true);
+  var s2name = fields['s2-name'] || '';
+  var s2date = fields['s2-date'] || today;
+  var s2time = fields['s2-time'] || nowTime;
+  html += sigRow('s2', s2name, s2date, s2time, true);
+  // Section 2 서명 이미지 복원 (있으면)
+  if(fields['sig2_img']) {
+    setTimeout(function(){
+      var canvas = document.getElementById('s2-sig');
+      if(canvas) {
+        var img = new Image();
+        img.onload = function(){ canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); };
+        img.src = fields['sig2_img'];
+        var hint = canvas.closest('.sig-area');
+        if(hint) { var lbl=hint.querySelector('.sig-label'); if(lbl) lbl.style.display='none'; }
+      }
+    }, 300);
+  }
   html += '</div>';
 
   // Section 3 (입력가능)
@@ -513,6 +542,12 @@ async function saveSig() {
 
     document.getElementById('loadingOverlay').style.display='none';
     if(res.ok) {
+      // PDF 다운로드
+      try {
+        await downloadSignedPDF();
+      } catch(pdfErr) {
+        console.warn('PDF 다운로드 실패:', pdfErr);
+      }
       document.getElementById('successOverlay').style.display='flex';
     } else {
       var err = await res.json();
@@ -523,6 +558,40 @@ async function saveSig() {
     document.getElementById('btnSave').disabled=false;
     alert('오류: '+e.message);
   }
+}
+
+// ── PDF 다운로드 ────────────────────────────────────────
+async function downloadSignedPDF() {
+  document.getElementById('loadingText').textContent='PDF 생성 중...';
+  document.getElementById('loadingOverlay').style.display='flex';
+
+  var jsPDF = window.jspdf.jsPDF;
+  var pdf = new jsPDF({orientation:'p', unit:'mm', format:'a4'});
+  var pages = document.querySelectorAll('.permit-wrap');
+  
+  for(var i=0; i<pages.length; i++) {
+    document.getElementById('loadingText').textContent='PDF 변환 중... ('+(i+1)+'/'+pages.length+'페이지)';
+    await new Promise(function(r){ setTimeout(r,50); });
+    var canvas = await html2canvas(pages[i], {
+      scale:2, useCORS:true, allowTaint:true, logging:false, backgroundColor:'#ffffff',
+      onclone: function(doc) {
+        doc.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"]').forEach(function(inp){
+          if(inp.value){ var s=doc.createElement('span'); s.textContent=inp.value; s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;'; inp.parentNode.replaceChild(s,inp); }
+        });
+        doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
+        doc.querySelectorAll('textarea').forEach(function(ta){ if(ta.value){ var s=doc.createElement('span'); s.textContent=ta.value; s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:block;width:100%;white-space:pre-wrap;'; ta.parentNode.replaceChild(s,ta); } });
+      }
+    });
+    var imgData = canvas.toDataURL('image/jpeg', 0.92);
+    var pdfW=210, pdfH=(canvas.height*pdfW)/canvas.width;
+    if(i>0) pdf.addPage();
+    pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH<=297?pdfH:297);
+  }
+
+  var now=new Date(), p2=function(n){return String(n).padStart(2,'0');};
+  var fname='BNCT_작업허가서_서명완료_'+now.getFullYear()+p2(now.getMonth()+1)+p2(now.getDate())+'_'+p2(now.getHours())+p2(now.getMinutes())+'.pdf';
+  pdf.save(fname);
+  document.getElementById('loadingOverlay').style.display='none';
 }
 
 function showError(msg) {
