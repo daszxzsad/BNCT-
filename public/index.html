@@ -779,13 +779,25 @@ function collectFormFields() {
     var key = el.id || ('chk_permit_' + i);
     fields[key] = el.checked;
   });
-  // Section 2 서명
+  // Section 2 서명 (id로 찾거나 section 내 첫 번째 캔버스)
   var sig2canvas = document.getElementById('s2-sig');
+  if(!sig2canvas) {
+    // id가 없는 경우 permit section 내 첫 번째 sig-canvas 찾기
+    var permitSec = document.getElementById('section-permit-main');
+    if(permitSec) sig2canvas = permitSec.querySelector('.sig-canvas');
+  }
   if(sig2canvas) {
     var imgData = sig2canvas.toDataURL('image/png');
     var empty = !sig2canvas.getContext('2d').getImageData(0,0,sig2canvas.width,sig2canvas.height).data.some(function(v,i){ return i%4!==3&&v>0; });
     if(!empty) fields['sig2_img'] = imgData;
   }
+  // s2 이름/날짜/시간도 수집
+  var s2name = document.getElementById('s2-name');
+  var s2date = document.getElementById('s2-date');
+  var s2time = document.getElementById('s2-time');
+  if(s2name) fields['s2-name'] = s2name.value;
+  if(s2date) fields['s2-date'] = s2date.value;
+  if(s2time) fields['s2-time'] = s2time.value;
   return fields;
 }
 
@@ -845,9 +857,10 @@ function clearSig(btn) {
 }
 
 // ── 서명 블록 헬퍼 ───────────────────────────────────────
-function sigBlock(w,h) {
+function sigBlock(w,h,canvasId) {
   w=w||140; h=h||70;
-  return '<div class="sig-area" style="width:'+w+'px;height:'+h+'px;"><canvas class="sig-canvas" width="'+w+'" height="'+h+'"></canvas><div class="sig-label">여기에 서명하세요</div><button class="sig-clear-btn" onclick="clearSig(this)">지우기</button></div>';
+  var idAttr = canvasId ? ' id="'+canvasId+'"' : '';
+  return '<div class="sig-area" style="width:'+w+'px;height:'+h+'px;"><canvas class="sig-canvas"'+idAttr+' width="'+w+'" height="'+h+'"></canvas><div class="sig-label">여기에 서명하세요</div><button class="sig-clear-btn" onclick="clearSig(this)">지우기</button></div>';
 }
 
 // ── 제출 ─────────────────────────────────────────────────
@@ -1165,7 +1178,7 @@ function buildPermitForm(f) {
     return '<div class="sig-inline" style="margin-top:8px;">'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">이름</div>'
       +'<input type="text" id="'+id+'-name" style="width:100%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:12px;font-family:inherit;padding:4px 0;"></div>'
-      +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">서명</div>'+sigBlock(120,52)+'</div>'
+      +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">서명</div>'+sigBlock(120,52,id+'-sig')+'</div>'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">날짜</div>'
       +'<input type="date" id="'+id+'-date" style="width:100%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:12px;font-family:inherit;"></div>'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">시간</div>'
@@ -1177,7 +1190,7 @@ function buildPermitForm(f) {
     return '<div class="sig-inline" style="margin-top:8px;">'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">이름</div>'
       +'<input type="text" id="'+id+'-name" value="'+name+'" readonly style="width:100%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:12px;font-family:inherit;padding:4px 0;background:#f8faff;color:#003087;font-weight:700;"></div>'
-      +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">서명</div>'+sigBlock(120,52)+'</div>'
+      +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">서명</div>'+sigBlock(120,52,id+'-sig')+'</div>'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">날짜</div>'
       +'<input type="date" id="'+id+'-date" value="'+today+'" readonly style="width:100%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:12px;font-family:inherit;background:#f8faff;"></div>'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">시간</div>'
