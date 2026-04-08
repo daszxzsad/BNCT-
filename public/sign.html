@@ -121,11 +121,6 @@ body { font-family:'Noto Sans KR',sans-serif; background:#f0f4f8; color:#1a2332;
 .success-icon { font-size:56px; margin-bottom:16px; }
 .success-title { font-size:24px; font-weight:900; color:#003087; margin-bottom:8px; }
 .success-desc { font-size:14px; color:#666; }
-
-.expired-msg {
-  text-align:center; padding:80px 24px; color:#999;
-}
-.expired-icon { font-size:64px; margin-bottom:20px; }
 </style>
 </head>
 <body>
@@ -154,7 +149,6 @@ body { font-family:'Noto Sans KR',sans-serif; background:#f0f4f8; color:#1a2332;
   <div class="error-box" id="errorBox"></div>
   <div id="pageContent" style="display:none;">
 
-    <!-- 서류 정보 -->
     <div class="info-card">
       <h2>작업허가서 서명 요청</h2>
       <table class="info-table">
@@ -165,7 +159,6 @@ body { font-family:'Noto Sans KR',sans-serif; background:#f0f4f8; color:#1a2332;
       </table>
     </div>
 
-    <!-- Section 3 -->
     <div class="section-card">
       <div class="section-title">
         Section 3: 작업업체 검토 (업무담당자 작성)
@@ -183,7 +176,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:#f0f4f8; color:#1a2332;
         </div>
         <div class="sig-item" style="flex:2;">
           <div class="sig-label">서명</div>
-          <div class="sig-area">
+          <div class="sig-area" id="sigArea3">
             <canvas class="sig-canvas" id="sigCanvas3"></canvas>
             <div class="sig-hint" id="sigHint3">여기에 서명하세요</div>
             <button class="sig-clear" onclick="clearSig(3)">지우기</button>
@@ -200,7 +193,6 @@ body { font-family:'Noto Sans KR',sans-serif; background:#f0f4f8; color:#1a2332;
       </div>
     </div>
 
-    <!-- Section 4 -->
     <div class="section-card">
       <div class="section-title">
         Section 4: 승인 (작업허가 승인 담당자)
@@ -217,7 +209,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:#f0f4f8; color:#1a2332;
         </div>
         <div class="sig-item" style="flex:2;">
           <div class="sig-label">서명</div>
-          <div class="sig-area">
+          <div class="sig-area" id="sigArea4">
             <canvas class="sig-canvas" id="sigCanvas4"></canvas>
             <div class="sig-hint" id="sigHint4">여기에 서명하세요</div>
             <button class="sig-clear" onclick="clearSig(4)">지우기</button>
@@ -242,18 +234,17 @@ body { font-family:'Noto Sans KR',sans-serif; background:#f0f4f8; color:#1a2332;
 var TOKEN = new URLSearchParams(location.search).get('token');
 var permitData = null;
 
-// 날짜/시간 자동
 var now = new Date();
 var p2 = function(n){ return String(n).padStart(2,'0'); };
 var today = now.getFullYear()+'-'+p2(now.getMonth()+1)+'-'+p2(now.getDate());
 var nowTime = p2(now.getHours())+':'+p2(now.getMinutes());
 
-// 서명 패드 초기화
+// ── 서명 패드 ────────────────────────────────────────────
 function initSigPad(canvasId, hintId) {
   var canvas = document.getElementById(canvasId);
   var ctx = canvas.getContext('2d');
   var drawing = false, lx = 0, ly = 0;
-  ctx.strokeStyle = '#003087'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.strokeStyle = '#003087'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
   function getPos(e) {
     var r = canvas.getBoundingClientRect();
@@ -266,7 +257,8 @@ function initSigPad(canvasId, hintId) {
   canvas.addEventListener('mousemove', function(e){
     if(!drawing) return;
     var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke();
-    lx=p.x; ly=p.y; document.getElementById(hintId).style.display='none';
+    lx=p.x; ly=p.y;
+    document.getElementById(hintId).style.display='none';
   });
   canvas.addEventListener('mouseup', function(){ drawing=false; });
   canvas.addEventListener('mouseleave', function(){ drawing=false; });
@@ -274,7 +266,8 @@ function initSigPad(canvasId, hintId) {
   canvas.addEventListener('touchmove', function(e){
     e.preventDefault(); if(!drawing) return;
     var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke();
-    lx=p.x; ly=p.y; document.getElementById(hintId).style.display='none';
+    lx=p.x; ly=p.y;
+    document.getElementById(hintId).style.display='none';
   });
   canvas.addEventListener('touchend', function(){ drawing=false; });
 }
@@ -291,15 +284,17 @@ function isSigEmpty(canvasId) {
   return !data.some(function(v,i){ return i%4!==3 && v>0; });
 }
 
-// 캔버스 크기 초기화
+// ── 수정된 캔버스 크기 초기화 (Bug Fix #2) ────────────────
 function resizeCanvas(canvasId) {
   var canvas = document.getElementById(canvasId);
-  var rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = rect.width;
+  var parent = canvas.parentElement;
+  // getBoundingClientRect가 0을 반환할 경우 offsetWidth로 fallback, 그것도 0이면 280px 기본값
+  var w = parent.getBoundingClientRect().width || parent.offsetWidth || 280;
+  canvas.width = Math.max(w, 100);
   canvas.height = 80;
 }
 
-// 데이터 로드
+// ── 데이터 로드 ──────────────────────────────────────────
 async function loadPermit() {
   if(!TOKEN) {
     showError('유효하지 않은 링크입니다.');
@@ -321,33 +316,32 @@ async function loadPermit() {
 
     permitData = data.permit;
 
-    // 정보 표시
     document.getElementById('infoProject').textContent = permitData.project_name || '-';
     document.getElementById('infoCompany').textContent = permitData.company_name || '-';
     document.getElementById('infoWorker').textContent = (permitData.worker_count || '-') + '명';
     document.getElementById('infoDate').textContent = permitData.submit_date || '-';
 
-    // Section 3 이름 (담당자)
     var managers = [];
     try { managers = JSON.parse(permitData.managers || '[]'); } catch(e){}
     var managerNames = managers.map(function(m){ return m.name; }).join(', ');
     document.getElementById('s3Name').value = managerNames;
 
-    // 날짜/시간 자동
     document.getElementById('s3Date').value = today;
     document.getElementById('s3Time').value = nowTime;
     document.getElementById('s4Date').value = today;
     document.getElementById('s4Time').value = nowTime;
 
-    // 서명 캔버스 초기화
-    setTimeout(function(){
-      resizeCanvas('sigCanvas3');
-      resizeCanvas('sigCanvas4');
-      initSigPad('sigCanvas3','sigHint3');
-      initSigPad('sigCanvas4','sigHint4');
-    }, 100);
-
     document.getElementById('pageContent').style.display='block';
+
+    // 레이아웃이 완전히 잡힌 후 캔버스 초기화
+    requestAnimationFrame(function(){
+      setTimeout(function(){
+        resizeCanvas('sigCanvas3');
+        resizeCanvas('sigCanvas4');
+        initSigPad('sigCanvas3','sigHint3');
+        initSigPad('sigCanvas4','sigHint4');
+      }, 150);
+    });
 
   } catch(e) {
     document.getElementById('loadingOverlay').style.display='none';
@@ -356,7 +350,6 @@ async function loadPermit() {
 }
 
 async function submitSig() {
-  // 체크박스 확인
   var allChecked = ['c3-1','c3-2','c3-3','c4-1','c4-2'].every(function(id){
     return document.getElementById(id).checked;
   });
@@ -364,8 +357,6 @@ async function submitSig() {
     alert('Section 3, 4의 모든 항목에 체크해 주세요.');
     return;
   }
-
-  // 서명 확인
   if(isSigEmpty('sigCanvas3')) {
     alert('Section 3 서명을 해주세요.');
     return;
@@ -383,7 +374,6 @@ async function submitSig() {
     var sig3 = document.getElementById('sigCanvas3').toDataURL('image/png');
     var sig4 = document.getElementById('sigCanvas4').toDataURL('image/png');
 
-    // Supabase에 서명 저장
     var res = await fetch('/api/save-signature', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
