@@ -887,26 +887,31 @@ async function doSubmit(recipients) {
 
     for(var pi=0;pi<allPages.length;pi++) {
       showLoadingOverlay(true,'PDF 변환 중... ('+(pi+1)+'/'+allPages.length+'페이지)');
-      await new Promise(function(r){ setTimeout(r,30); });
+      await new Promise(function(r){ setTimeout(r,50); });
       var canvas=await html2canvas(allPages[pi],{
-        scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',windowWidth:794,
+        scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',
         onclone:function(doc){
           doc.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"]').forEach(function(inp){
             if(inp.value){ var s=doc.createElement('span'); s.textContent=inp.value; s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;'; inp.parentNode.replaceChild(s,inp); }
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
+          // 서명 캔버스를 이미지로 교체
+          doc.querySelectorAll('.sig-canvas').forEach(function(cv){
+            var orig=document.getElementById(cv.id)||cv;
+            var img=doc.createElement('img');
+            try{ img.src=orig.toDataURL('image/jpeg',0.8); }catch(e){ return; }
+            img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
+            if(cv.parentNode) cv.parentNode.replaceChild(img,cv);
+          });
         }
       });
-      var imgData=canvas.toDataURL('image/jpeg',0.95);
-      var pdfW=210, pdfH=(canvas.height*pdfW)/canvas.width;
-      if(pi>0) pdf.addPage();
-      pdf.addImage(imgData,'JPEG',0,0,pdfW,if(pdfH <= 297) {
-        pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
-      } else {
-        var ratio = 297 / pdfH;
-        pdf.addImage(imgData,'JPEG',0,0,pdfW*ratio,297);
-      });
+      var imgData=canvas.toDataURL('image/jpeg',0.92);
+      // 비율 유지 - 압축 없이 실제 높이 그대로
+      var pdfW=210;
+      var pdfH=(canvas.height/canvas.width)*pdfW;
+      if(pi>0) pdf.addPage([pdfW, pdfH]);
+      pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
     }
 
     sections.forEach(function(s){ s.style.display=s.classList.contains('active')?'block':'none'; });
