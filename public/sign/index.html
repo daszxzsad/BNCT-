@@ -542,11 +542,24 @@ async function saveSig() {
 
     document.getElementById('loadingOverlay').style.display='none';
     if(res.ok) {
-      // PDF 다운로드
+      // 서버에서 PDF 생성 후 다운로드
       try {
-        await downloadSignedPDF();
+        document.getElementById('loadingOverlay').style.display='flex';
+        document.getElementById('loadingText').textContent='PDF 생성 중...';
+        var pdfRes = await fetch('/api/generate-pdf?token=' + TOKEN);
+        if(pdfRes.ok) {
+          var blob = await pdfRes.blob();
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'BNCT_작업허가서_서명완료.pdf';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+        document.getElementById('loadingOverlay').style.display='none';
       } catch(pdfErr) {
         console.warn('PDF 다운로드 실패:', pdfErr);
+        document.getElementById('loadingOverlay').style.display='none';
       }
       document.getElementById('successOverlay').style.display='flex';
     } else {
@@ -567,25 +580,82 @@ async function downloadSignedPDF() {
 
   var jsPDF = window.jspdf.jsPDF;
   var pdf = new jsPDF({orientation:'p', unit:'mm', format:'a4'});
+  var pdfW = 210, pdfH = 297;
   var pages = document.querySelectorAll('.permit-wrap');
-  
-  for(var i=0; i<pages.length; i++) {
-    document.getElementById('loadingText').textContent='PDF 변환 중... ('+(i+1)+'/'+pages.length+'페이지)';
-    await new Promise(function(r){ setTimeout(r,50); });
-    var canvas = await html2canvas(pages[i], {
-      scale:2, useCORS:true, allowTaint:true, logging:false, backgroundColor:'#ffffff',
-      onclone: function(doc) {
-        doc.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"]').forEach(function(inp){
-          if(inp.value){ var s=doc.createElement('span'); s.textContent=inp.value; s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;'; inp.parentNode.replaceChild(s,inp); }
-        });
-        doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
-        doc.querySelectorAll('textarea').forEach(function(ta){ if(ta.value){ var s=doc.createElement('span'); s.textContent=ta.value; s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:block;width:100%;white-space:pre-wrap;'; ta.parentNode.replaceChild(s,ta); } });
+  var pageIndex = 0;
+
+  function cloneTransform(doc) {
+    doc.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"]').forEach(function(inp){
+      if(inp.value){ var s=doc.createElement('span'); s.textContent=inp.value; s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;'; inp.parentNode.replaceChild(s,inp); }
+    });
+    doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+      var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb);
+    });
+    doc.querySelectorAll('textarea').forEach(function(ta){
+      var s=doc.createElement('span'); s.textContent=ta.value||''; s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:block;width:100%;white-space:pre-wrap;'; ta.parentNode.replaceChild(s,ta);
+    });
+    // 서명 캔버스를 이미지로 교체
+    doc.querySelectorAll('.sig-canvas').forEach(function(canvas){
+      var origCanvas = document.getElementById(canvas.id);
+      if(origCanvas) {
+        var img = doc.createElement('img');
+        img.src = origCanvas.toDataURL('image/png');
+        img.style.cssText = 'width:100%;height:60px;object-fit:contain;display:block;';
+        canvas.parentNode.replaceChild(img, canvas);
       }
     });
-    var imgData = canvas.toDataURL('image/jpeg', 0.92);
-    var pdfW=210, pdfH=(canvas.height*pdfW)/canvas.width;
-    if(i>0) pdf.addPage();
-    pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH<=297?pdfH:297);
+  }
+
+  for(var i=0; i<pages.length; i++) {
+    document.getElementById('loadingText').textContent='PDF 변환 중... ('+(i+1)+'/'+pages.length+')';
+    await new Promise(function(r){ setTimeout(r,80); });
+
+    var canvas = await html2canvas(pages[i], {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: 860,
+      onclone: cloneTransform
+    });
+
+    var imgW = pdfW;
+    var imgH = (canvas.height * imgW) / canvas.width;
+    var margin = 5; // mm 여백
+    var usableH = pdfH - margin*2;
+
+    if(imgH <= usableH) {
+      // 한 페이지에 들어가는 경우
+      if(pageIndex > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92), 'JPEG', 0, margin, imgW, imgH);
+      pageIndex++;
+    } else {
+      // 여러 페이지로 분할
+      var totalPx = canvas.height;
+      var pxPerMm = canvas.height / imgH;
+      var sliceH = usableH * pxPerMm; // 한 페이지에 들어갈 픽셀 높이
+      var offsetPx = 0;
+
+      while(offsetPx < totalPx) {
+        if(pageIndex > 0) pdf.addPage();
+
+        var remainPx = totalPx - offsetPx;
+        var thisPx = Math.min(sliceH, remainPx);
+        var thisMm = thisPx / pxPerMm;
+
+        // 슬라이스 캔버스 생성
+        var sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = Math.ceil(thisPx);
+        var ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, -offsetPx);
+
+        pdf.addImage(sliceCanvas.toDataURL('image/jpeg',0.92), 'JPEG', 0, margin, imgW, thisMm);
+        offsetPx += thisPx;
+        pageIndex++;
+      }
+    }
   }
 
   var now=new Date(), p2=function(n){return String(n).padStart(2,'0');};
