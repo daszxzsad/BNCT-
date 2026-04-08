@@ -87,6 +87,7 @@ function v(id){var e=document.getElementById(id);return e?e.value:'';}
 
 function initPad(cv){
   var ctx=cv.getContext('2d'),dr=false,lx=0,ly=0;
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,cv.width,cv.height);
   ctx.strokeStyle='#000000';ctx.lineWidth=2;ctx.lineCap='round';
   function gp(e){var r=cv.getBoundingClientRect(),sx=cv.width/r.width,sy=cv.height/r.height;
     return e.touches?{x:(e.touches[0].clientX-r.left)*sx,y:(e.touches[0].clientY-r.top)*sy}:{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};}
@@ -203,7 +204,17 @@ async function doSave(){
     var res=await fetch('/api/save-signature',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sd)});
     if(!res.ok){var e=await res.json();throw new Error(e.error||'저장 실패');}
     ld(true,'PDF 생성 중...');
-    await makePDF(sd);
+    try {
+      var pdfRes = await fetch('/api/generate-pdf?token='+TK);
+      if(pdfRes.ok){
+        var blob=await pdfRes.blob();
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a');a.href=url;
+        a.download='BNCT_작업허가서_서명완료.pdf';
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch(pe){ console.warn('PDF 생성 실패',pe); }
     ld(false);document.getElementById('DONE').style.display='flex';
   }catch(e){ld(false);document.getElementById('btnSave').disabled=false;alert('오류: '+e.message);}
 }
