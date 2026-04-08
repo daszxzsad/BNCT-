@@ -901,7 +901,12 @@ async function doSubmit(recipients) {
       var imgData=canvas.toDataURL('image/jpeg',0.95);
       var pdfW=210, pdfH=(canvas.height*pdfW)/canvas.width;
       if(pi>0) pdf.addPage();
-      pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH<=297?pdfH:297);
+      pdf.addImage(imgData,'JPEG',0,0,pdfW,if(pdfH <= 297) {
+        pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
+      } else {
+        var ratio = 297 / pdfH;
+        pdf.addImage(imgData,'JPEG',0,0,pdfW*ratio,297);
+      });
     }
 
     sections.forEach(function(s){ s.style.display=s.classList.contains('active')?'block':'none'; });
