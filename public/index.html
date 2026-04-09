@@ -863,7 +863,7 @@ function clearSig(btn) {
 function sigBlock(w,h,canvasId) {
   w=w||140; h=h||70;
   var idAttr = canvasId ? ' id="'+canvasId+'"' : '';
-  return '<div class="sig-area" style="width:'+w+'px;height:'+h+'px;"><canvas class="sig-canvas"'+idAttr+' width="'+w+'" height="'+h+'"></canvas><div class="sig-label">여기에 서명하세요</div><button class="sig-clear-btn" onclick="clearSig(this)">지우기</button></div>';
+  return '<div class="sig-area" style="width:'+w+'px;height:'+h+'px;background:#ffffff !important;"><canvas class="sig-canvas"'+idAttr+' width="'+w+'" height="'+h+'" style="background:#ffffff;"></canvas><div class="sig-label">여기에 서명하세요</div><button class="sig-clear-btn" onclick="clearSig(this)">지우기</button></div>';
 }
 
 // ── 제출 ─────────────────────────────────────────────────
