@@ -887,6 +887,22 @@ async function doSubmit(recipients) {
     if(allPages.length===0) throw new Error('서류가 없습니다.');
     sections.forEach(function(s){ s.style.display='block'; });
 
+    // 서명 이미지 미리 수집 (onclone 전에 원본에서 추출)
+    var sigMap={};
+    allPages[0].closest('#formsContainer').querySelectorAll('.sig-canvas').forEach(function(cv){
+      try{
+        var flat=document.createElement('canvas');
+        flat.width=cv.width||200; flat.height=cv.height||60;
+        var ctx=flat.getContext('2d');
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,flat.width,flat.height);
+        ctx.drawImage(cv,0,0);
+        var key=cv.id||('sig_'+Math.random());
+        if(!cv.id) cv.setAttribute('data-sigkey',key);
+        else cv.setAttribute('data-sigkey',cv.id);
+        sigMap[key]=flat.toDataURL('image/jpeg',0.92);
+      }catch(e){}
+    });
+
     for(var pi=0;pi<allPages.length;pi++) {
       showLoadingOverlay(true,'PDF 변환 중... ('+(pi+1)+'/'+allPages.length+'페이지)');
       await new Promise(function(r){ setTimeout(r,50); });
@@ -898,26 +914,21 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
-          // 서명 캔버스를 이미지로 교체 (흰색 배경 먼저 채우기)
+          // 서명: 미리 수집한 이미지 사용
           doc.querySelectorAll('.sig-canvas').forEach(function(cv){
-            var orig=document.getElementById(cv.id)||cv;
+            var key=cv.getAttribute('data-sigkey')||cv.id;
+            var imgSrc=key?sigMap[key]:null;
+            if(!imgSrc) return;
             try{
-              // 흰색 배경 캔버스에 서명 그리기
-              var flat=document.createElement('canvas');
-              flat.width=orig.width||200; flat.height=orig.height||60;
-              var ctx=flat.getContext('2d');
-              ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,flat.width,flat.height);
-              ctx.drawImage(orig,0,0);
               var img=doc.createElement('img');
-              img.src=flat.toDataURL('image/jpeg',0.9);
-              img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
+              img.src=imgSrc;
+              img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;background:white;';
               if(cv.parentNode) cv.parentNode.replaceChild(img,cv);
             }catch(e){}
           });
         }
       });
       var imgData=canvas.toDataURL('image/jpeg',0.92);
-      // 비율 유지 - 압축 없이 실제 높이 그대로
       var pdfW=210;
       var pdfH=(canvas.height/canvas.width)*pdfW;
       if(pi>0) pdf.addPage([pdfW, pdfH]);
