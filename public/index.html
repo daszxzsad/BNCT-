@@ -852,7 +852,10 @@ function initSigPads(formId) {
 function clearSig(btn) {
   var area=btn.closest('.sig-area');
   var canvas=area.querySelector('.sig-canvas');
-  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  var ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
   area.querySelector('.sig-label').style.display='';
 }
 
