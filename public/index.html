@@ -908,34 +908,7 @@ async function doSubmit(recipients) {
       await new Promise(function(r){ setTimeout(r,50); });
       var page=allPages[pi];
 
-      // 1. 페이지 안 canvas마다 흰배경+서명 합성 이미지URL 미리 저장
-      var canvasReplacements=[];
-      page.querySelectorAll('canvas').forEach(function(cv){
-        var flat=document.createElement('canvas');
-        flat.width=cv.width||200;
-        flat.height=cv.height||60;
-        var fctx=flat.getContext('2d');
-        fctx.fillStyle='#ffffff';
-        fctx.fillRect(0,0,flat.width,flat.height);
-        try{ fctx.drawImage(cv,0,0); }catch(e){}
-        var imgSrc=flat.toDataURL('image/png');
-        // 2. canvas를 img 태그로 교체
-        var img=document.createElement('img');
-        img.src=imgSrc;
-        img.width=flat.width; img.height=flat.height;
-        img.style.cssText='display:block;background:#ffffff;';
-        cv.parentNode.replaceChild(img,cv);
-        canvasReplacements.push({img:img,cv:cv});
-      });
-
-      // 3. .sig-clear-btn, .sig-label 숨기기
-      var hiddenEls=[];
-      page.querySelectorAll('.sig-clear-btn,.sig-label').forEach(function(el){
-        hiddenEls.push({el:el,prev:el.style.display});
-        el.style.display='none';
-      });
-
-      // 4. html2canvas로 캡처
+      // html2canvas로 캡처
       var canvas=await html2canvas(page,{
         scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',
         onclone:function(doc){
@@ -955,14 +928,6 @@ async function doSubmit(recipients) {
             cv.parentNode.replaceChild(img,cv);
           });
         }
-      });
-
-      // 5. 원래대로 복구
-      canvasReplacements.forEach(function(item){
-        item.img.parentNode.replaceChild(item.cv,item.img);
-      });
-      hiddenEls.forEach(function(item){
-        item.el.style.display=item.prev;
       });
 
       var imgData=canvas.toDataURL('image/jpeg',0.92);
