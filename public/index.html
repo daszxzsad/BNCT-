@@ -890,27 +890,40 @@ async function doSubmit(recipients) {
     if(allPages.length===0) throw new Error('서류가 없습니다.');
     sections.forEach(function(s){ s.style.display='block'; });
 
-    // 서명 이미지 미리 수집 - sig-area에 data-sid 부여, 흰 배경 합성 후 sigMap에 저장
-    var sigMap={};
-    document.querySelectorAll('#formsContainer .sig-area').forEach(function(area,i){
-      var sid='sid-'+i;
-      area.setAttribute('data-sid',sid);
-      var cv=area.querySelector('.sig-canvas');
-      if(!cv){ sigMap[sid]=null; return; }
-      try{
-        var flat=document.createElement('canvas');
-        flat.width=cv.width||200; flat.height=cv.height||60;
-        var fctx=flat.getContext('2d');
-        fctx.fillStyle='#ffffff'; fctx.fillRect(0,0,flat.width,flat.height);
-        fctx.drawImage(cv,0,0);
-        sigMap[sid]=flat.toDataURL('image/png');
-      }catch(e){ sigMap[sid]=null; }
-    });
-
     for(var pi=0;pi<allPages.length;pi++) {
       showLoadingOverlay(true,'PDF 변환 중... ('+(pi+1)+'/'+allPages.length+'페이지)');
       await new Promise(function(r){ setTimeout(r,50); });
-      var canvas=await html2canvas(allPages[pi],{
+      var page=allPages[pi];
+
+      // 1. 페이지 안 canvas마다 흰배경+서명 합성 이미지URL 미리 저장
+      var canvasReplacements=[];
+      page.querySelectorAll('canvas').forEach(function(cv){
+        var flat=document.createElement('canvas');
+        flat.width=cv.offsetWidth||cv.width||200;
+        flat.height=cv.offsetHeight||cv.height||60;
+        var fctx=flat.getContext('2d');
+        fctx.fillStyle='#ffffff';
+        fctx.fillRect(0,0,flat.width,flat.height);
+        try{ fctx.drawImage(cv,0,0,flat.width,flat.height); }catch(e){}
+        var imgSrc=flat.toDataURL('image/png');
+        // 2. canvas를 img 태그로 교체
+        var img=document.createElement('img');
+        img.src=imgSrc;
+        img.width=flat.width; img.height=flat.height;
+        img.style.cssText='display:block;background:#ffffff;';
+        cv.parentNode.replaceChild(img,cv);
+        canvasReplacements.push({img:img,cv:cv});
+      });
+
+      // 3. .sig-clear-btn, .sig-label 숨기기
+      var hiddenEls=[];
+      page.querySelectorAll('.sig-clear-btn,.sig-label').forEach(function(el){
+        hiddenEls.push({el:el,prev:el.style.display});
+        el.style.display='none';
+      });
+
+      // 4. html2canvas로 캡처
+      var canvas=await html2canvas(page,{
         scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',
         onclone:function(doc){
           doc.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"]').forEach(function(inp){
@@ -918,31 +931,17 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
-          // sig-area 처리: data-sid 매핑으로 innerHTML 완전 교체 → 흰 배경 + 서명 이미지
-          doc.querySelectorAll('.sig-area').forEach(function(area){
-            var sid=area.getAttribute('data-sid');
-            var imgSrc=(sid&&sigMap[sid])?sigMap[sid]:null;
-            area.style.background='#ffffff';
-            area.style.backgroundColor='#ffffff';
-            area.innerHTML='';
-            var img=doc.createElement('img');
-            img.style.cssText='display:block;width:100%;height:100%;object-fit:contain;background:#ffffff;';
-            if(imgSrc){ img.src=imgSrc; }
-            area.appendChild(img);
-          });
-          doc.querySelectorAll('canvas').forEach(function(cv) {
-            var orig = document.querySelector('canvas[data-id="' + cv.id + '"]') || document.getElementById(cv.id);
-            var newCanvas = doc.createElement('canvas');
-            newCanvas.width = cv.width;
-            newCanvas.height = cv.height;
-            var ctx = newCanvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
-            if (orig) ctx.drawImage(orig, 0, 0);
-            cv.parentNode.replaceChild(newCanvas, cv);
-          });
         }
       });
+
+      // 5. 원래대로 복구
+      canvasReplacements.forEach(function(item){
+        item.img.parentNode.replaceChild(item.cv,item.img);
+      });
+      hiddenEls.forEach(function(item){
+        item.el.style.display=item.prev;
+      });
+
       var imgData=canvas.toDataURL('image/jpeg',0.92);
       var pdfW=210;
       var pdfH=(canvas.height/canvas.width)*pdfW;
