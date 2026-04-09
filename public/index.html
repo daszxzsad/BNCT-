@@ -927,6 +927,17 @@ async function doSubmit(recipients) {
             if(imgSrc){ img.src=imgSrc; }
             area.appendChild(img);
           });
+          doc.querySelectorAll('canvas').forEach(function(cv) {
+            var orig = document.querySelector('canvas[data-id="' + cv.id + '"]') || document.getElementById(cv.id);
+            var newCanvas = doc.createElement('canvas');
+            newCanvas.width = cv.width;
+            newCanvas.height = cv.height;
+            var ctx = newCanvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+            if (orig) ctx.drawImage(orig, 0, 0);
+            cv.parentNode.replaceChild(newCanvas, cv);
+          });
         }
       });
       var imgData=canvas.toDataURL('image/jpeg',0.92);
