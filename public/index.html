@@ -899,12 +899,12 @@ async function doSubmit(recipients) {
       var canvasReplacements=[];
       page.querySelectorAll('canvas').forEach(function(cv){
         var flat=document.createElement('canvas');
-        flat.width=cv.offsetWidth||cv.width||200;
-        flat.height=cv.offsetHeight||cv.height||60;
+        flat.width=cv.width||200;
+        flat.height=cv.height||60;
         var fctx=flat.getContext('2d');
         fctx.fillStyle='#ffffff';
         fctx.fillRect(0,0,flat.width,flat.height);
-        try{ fctx.drawImage(cv,0,0,flat.width,flat.height); }catch(e){}
+        try{ fctx.drawImage(cv,0,0); }catch(e){}
         var imgSrc=flat.toDataURL('image/png');
         // 2. canvas를 img 태그로 교체
         var img=document.createElement('img');
