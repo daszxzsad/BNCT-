@@ -912,23 +912,19 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
-          // 버튼/힌트 제거
-          doc.querySelectorAll('.sig-clear-btn,.sig-label').forEach(function(el){ el.remove(); });
-          // 서명 이미지 교체 - 인덱스 기반
-          doc.querySelectorAll('.sig-canvas').forEach(function(cv){
+          // sig-area 단위로 처리: 버튼/힌트 제거 + 캔버스 → 흰 배경 이미지 교체
+          doc.querySelectorAll('.sig-area').forEach(function(area){
+            area.querySelectorAll('.sig-clear-btn,.sig-label').forEach(function(el){ el.remove(); });
+            var cv=area.querySelector('.sig-canvas');
+            if(!cv) return;
             var idx=parseInt(cv.getAttribute('data-sigidx'));
             var imgSrc=(idx>=0&&sigImages[idx])?sigImages[idx]:null;
-            var area=cv.closest('.sig-area');
-            if(!area) return;
-            try{
-              var img=doc.createElement('img');
-              img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:white;display:block;';
-              if(imgSrc){ img.src=imgSrc; }
-              else { img.src=''; img.style.background='white'; }
-              area.style.background='white';
-              area.innerHTML='';
-              area.appendChild(img);
-            }catch(e){}
+            var img=doc.createElement('img');
+            img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:#ffffff;';
+            if(imgSrc){ img.src=imgSrc; }
+            area.style.cssText=(area.getAttribute('style')||'')+'background:#ffffff !important;background-color:#ffffff !important;';
+            cv.parentNode.removeChild(cv);
+            area.appendChild(img);
           });
         }
       });
