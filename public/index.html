@@ -890,6 +890,19 @@ async function doSubmit(recipients) {
     if(allPages.length===0) throw new Error('서류가 없습니다.');
     sections.forEach(function(s){ s.style.display='block'; });
 
+    var sigImages=[];
+    document.querySelectorAll('#formsContainer .sig-canvas').forEach(function(cv,i){
+      try{
+        var flat=document.createElement('canvas');
+        flat.width=cv.width||200; flat.height=cv.height||60;
+        var ctx=flat.getContext('2d');
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,flat.width,flat.height);
+        ctx.drawImage(cv,0,0);
+        cv.setAttribute('data-sigidx',String(i));
+        sigImages[i]=flat.toDataURL('image/jpeg',0.92);
+      }catch(e){ sigImages.push(''); }
+    });
+
     for(var pi=0;pi<allPages.length;pi++) {
       showLoadingOverlay(true,'PDF 변환 중... ('+(pi+1)+'/'+allPages.length+'페이지)');
       await new Promise(function(r){ setTimeout(r,50); });
@@ -931,6 +944,16 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
+          doc.querySelectorAll('.sig-clear-btn,.sig-label').forEach(function(el){ el.style.display='none'; });
+          doc.querySelectorAll('.sig-canvas').forEach(function(cv){
+            var idx=cv.getAttribute('data-sigidx');
+            var src=(idx!==null&&sigImages[parseInt(idx)])?sigImages[parseInt(idx)]:'';
+            var img=doc.createElement('img');
+            img.src=src;
+            img.width=cv.width||200; img.height=cv.height||60;
+            img.style.cssText='display:block;background:#ffffff;';
+            cv.parentNode.replaceChild(img,cv);
+          });
         }
       });
 
