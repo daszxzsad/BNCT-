@@ -170,10 +170,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .info-input:focus { background: #fffde7; }
 
 /* SIGNATURE */
-.sig-area { border: 2px solid #cccccc; border-radius: 8px; background: #ffffff; position: relative; overflow: hidden; }
-.sig-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 12px; color: #ccc; pointer-events: none; white-space: nowrap; }
-.sig-canvas { display: block; cursor: crosshair; touch-action: none; }
-.sig-clear-btn { position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,0.9); border: 1px solid var(--border); border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; color: var(--danger); }
+.sig-area { border: 2px solid #cccccc; border-radius: 8px; background: #ffffff; overflow: hidden; }
+.sig-canvas { display: block; cursor: crosshair; touch-action: none; background: #ffffff; }
 
 /* PERMIT */
 .permit-header-row { display: flex; align-items: center; margin-bottom: 16px; gap: 12px; }
@@ -225,7 +223,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   .app-header,.sidebar,.doc-header { display: none !important; }
   .main-content { padding: 0; }
   .document-page { box-shadow: none; border: none; margin: 0; max-width: 100%; page-break-after: always; }
-  .sig-clear-btn { display: none; }
 }
 @media (max-width: 900px) {
   .app-layout { flex-direction: column; }
@@ -832,7 +829,6 @@ function initSigPads(formId) {
   sec.querySelectorAll('.sig-canvas').forEach(function(canvas) {
     var ctx=canvas.getContext('2d');
     var drawing=false, lx=0, ly=0;
-    // 흰색 배경으로 초기화
     ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.strokeStyle='#000000'; ctx.lineWidth=1.8; ctx.lineCap='round'; ctx.lineJoin='round';
     function getPos(e) {
@@ -841,29 +837,20 @@ function initSigPads(formId) {
       return {x:e.clientX-r.left, y:e.clientY-r.top};
     }
     canvas.addEventListener('mousedown',function(e){ drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
-    canvas.addEventListener('mousemove',function(e){ if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; canvas.closest('.sig-area').querySelector('.sig-label').style.display='none'; });
+    canvas.addEventListener('mousemove',function(e){ if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; });
     canvas.addEventListener('mouseup',function(){ drawing=false; });
     canvas.addEventListener('mouseleave',function(){ drawing=false; });
     canvas.addEventListener('touchstart',function(e){ e.preventDefault(); drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
-    canvas.addEventListener('touchmove',function(e){ e.preventDefault(); if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; canvas.closest('.sig-area').querySelector('.sig-label').style.display='none'; });
+    canvas.addEventListener('touchmove',function(e){ e.preventDefault(); if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; });
     canvas.addEventListener('touchend',function(){ drawing=false; });
   });
-}
-function clearSig(btn) {
-  var area=btn.closest('.sig-area');
-  var canvas=area.querySelector('.sig-canvas');
-  var ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='#ffffff';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  area.querySelector('.sig-label').style.display='';
 }
 
 // ── 서명 블록 헬퍼 ───────────────────────────────────────
 function sigBlock(w,h,canvasId) {
   w=w||140; h=h||70;
   var idAttr = canvasId ? ' id="'+canvasId+'"' : '';
-  return '<div class="sig-area" style="width:'+w+'px;height:'+h+'px;background:#ffffff !important;"><canvas class="sig-canvas"'+idAttr+' width="'+w+'" height="'+h+'" style="background:#ffffff;"></canvas><div class="sig-label">여기에 서명하세요</div><button class="sig-clear-btn" onclick="clearSig(this)">지우기</button></div>';
+  return '<div class="sig-area" style="width:'+w+'px;height:'+h+'px;"><canvas class="sig-canvas"'+idAttr+' width="'+w+'" height="'+h+'"></canvas></div>';
 }
 
 // ── 제출 ─────────────────────────────────────────────────
@@ -890,19 +877,6 @@ async function doSubmit(recipients) {
     if(allPages.length===0) throw new Error('서류가 없습니다.');
     sections.forEach(function(s){ s.style.display='block'; });
 
-    var sigImages=[];
-    document.querySelectorAll('#formsContainer .sig-canvas').forEach(function(cv,i){
-      try{
-        var flat=document.createElement('canvas');
-        flat.width=cv.width||200; flat.height=cv.height||60;
-        var ctx=flat.getContext('2d');
-        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,flat.width,flat.height);
-        ctx.drawImage(cv,0,0);
-        cv.setAttribute('data-sigidx',String(i));
-        sigImages[i]=flat.toDataURL('image/jpeg',0.92);
-      }catch(e){ sigImages.push(''); }
-    });
-
     for(var pi=0;pi<allPages.length;pi++) {
       showLoadingOverlay(true,'PDF 변환 중... ('+(pi+1)+'/'+allPages.length+'페이지)');
       await new Promise(function(r){ setTimeout(r,50); });
@@ -917,16 +891,6 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
-          doc.querySelectorAll('.sig-clear-btn,.sig-label').forEach(function(el){ el.style.display='none'; });
-          doc.querySelectorAll('.sig-canvas').forEach(function(cv){
-            var idx=cv.getAttribute('data-sigidx');
-            var src=(idx!==null&&sigImages[parseInt(idx)])?sigImages[parseInt(idx)]:'';
-            var img=doc.createElement('img');
-            img.src=src;
-            img.width=cv.width||200; img.height=cv.height||60;
-            img.style.cssText='display:block;background:#ffffff;';
-            cv.parentNode.replaceChild(img,cv);
-          });
         }
       });
 
