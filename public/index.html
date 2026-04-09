@@ -887,18 +887,21 @@ async function doSubmit(recipients) {
     if(allPages.length===0) throw new Error('서류가 없습니다.');
     sections.forEach(function(s){ s.style.display='block'; });
 
-    // 서명 이미지 미리 수집 - 인덱스 기반으로 확실하게
-    var sigImages=[];
-    document.querySelectorAll('#formsContainer .sig-canvas').forEach(function(cv,i){
+    // 서명 이미지 미리 수집 - sig-area에 data-sid 부여, 흰 배경 합성 후 sigMap에 저장
+    var sigMap={};
+    document.querySelectorAll('#formsContainer .sig-area').forEach(function(area,i){
+      var sid='sid-'+i;
+      area.setAttribute('data-sid',sid);
+      var cv=area.querySelector('.sig-canvas');
+      if(!cv){ sigMap[sid]=null; return; }
       try{
         var flat=document.createElement('canvas');
         flat.width=cv.width||200; flat.height=cv.height||60;
-        var ctx=flat.getContext('2d');
-        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,flat.width,flat.height);
-        ctx.drawImage(cv,0,0);
-        cv.setAttribute('data-sigidx',String(i));
-        sigImages[i]=flat.toDataURL('image/jpeg',0.92);
-      }catch(e){ sigImages.push(''); }
+        var fctx=flat.getContext('2d');
+        fctx.fillStyle='#ffffff'; fctx.fillRect(0,0,flat.width,flat.height);
+        fctx.drawImage(cv,0,0);
+        sigMap[sid]=flat.toDataURL('image/png');
+      }catch(e){ sigMap[sid]=null; }
     });
 
     for(var pi=0;pi<allPages.length;pi++) {
@@ -912,18 +915,16 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
-          // sig-area 단위로 처리: 버튼/힌트 제거 + 캔버스 → 흰 배경 이미지 교체
+          // sig-area 처리: data-sid 매핑으로 innerHTML 완전 교체 → 흰 배경 + 서명 이미지
           doc.querySelectorAll('.sig-area').forEach(function(area){
-            area.querySelectorAll('.sig-clear-btn,.sig-label').forEach(function(el){ el.remove(); });
-            var cv=area.querySelector('.sig-canvas');
-            if(!cv) return;
-            var idx=parseInt(cv.getAttribute('data-sigidx'));
-            var imgSrc=(idx>=0&&sigImages[idx])?sigImages[idx]:null;
+            var sid=area.getAttribute('data-sid');
+            var imgSrc=(sid&&sigMap[sid])?sigMap[sid]:null;
+            area.style.background='#ffffff';
+            area.style.backgroundColor='#ffffff';
+            area.innerHTML='';
             var img=doc.createElement('img');
-            img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:#ffffff;';
+            img.style.cssText='display:block;width:100%;height:100%;object-fit:contain;background:#ffffff;';
             if(imgSrc){ img.src=imgSrc; }
-            area.style.cssText=(area.getAttribute('style')||'')+'background:#ffffff !important;background-color:#ffffff !important;';
-            cv.parentNode.removeChild(cv);
             area.appendChild(img);
           });
         }

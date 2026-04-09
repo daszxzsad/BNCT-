@@ -450,7 +450,7 @@ function makePDF(sd){
   setT(160,160,160);doc.setFontSize(7);doc.text('Page 1 of 2',M+TW,y+2,{align:'right'});
 
   // ── PAGE 2 ──────────────────────────────────────────
-  doc.addPage();y=10;
+  doc.addPage();y=10;doc.setFont('KR','normal');
   setF(NV[0],NV[1],NV[2]);doc.rect(M,y,22,6.5,'F');
   setT(255,255,255);bold();doc.setFontSize(7.5);doc.text('작업허가서',M+1,y+4.3);
   setT(NV[0],NV[1],NV[2]);doc.setFontSize(14);doc.text('작업허가서  양식 (계속)',M+24,y+4.8);
