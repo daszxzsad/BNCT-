@@ -898,13 +898,21 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
-          // 서명 캔버스를 이미지로 교체
+          // 서명 캔버스를 이미지로 교체 (흰색 배경 먼저 채우기)
           doc.querySelectorAll('.sig-canvas').forEach(function(cv){
             var orig=document.getElementById(cv.id)||cv;
-            var img=doc.createElement('img');
-            try{ img.src=orig.toDataURL('image/jpeg',0.8); }catch(e){ return; }
-            img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
-            if(cv.parentNode) cv.parentNode.replaceChild(img,cv);
+            try{
+              // 흰색 배경 캔버스에 서명 그리기
+              var flat=document.createElement('canvas');
+              flat.width=orig.width||200; flat.height=orig.height||60;
+              var ctx=flat.getContext('2d');
+              ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,flat.width,flat.height);
+              ctx.drawImage(orig,0,0);
+              var img=doc.createElement('img');
+              img.src=flat.toDataURL('image/jpeg',0.9);
+              img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
+              if(cv.parentNode) cv.parentNode.replaceChild(img,cv);
+            }catch(e){}
           });
         }
       });
