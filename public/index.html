@@ -170,8 +170,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .info-input:focus { background: #fffde7; }
 
 /* SIGNATURE */
-.sig-area { border: 2px solid #cccccc; border-radius: 8px; background: #ffffff; overflow: hidden; }
-.sig-canvas { display: block; cursor: crosshair; touch-action: none; background: #ffffff; }
+.sig-area { border: 2px dashed var(--border); border-radius: 8px; background: #fafafa; position: relative; overflow: hidden; }
+.sig-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 12px; color: #ccc; pointer-events: none; white-space: nowrap; }
+.sig-canvas { display: block; cursor: crosshair; touch-action: none; }
+.sig-clear-btn { position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,0.9); border: 1px solid var(--border); border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; color: var(--danger); }
 
 /* PERMIT */
 .permit-header-row { display: flex; align-items: center; margin-bottom: 16px; gap: 12px; }
@@ -223,6 +225,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   .app-header,.sidebar,.doc-header { display: none !important; }
   .main-content { padding: 0; }
   .document-page { box-shadow: none; border: none; margin: 0; max-width: 100%; page-break-after: always; }
+  .sig-clear-btn { display: none; }
 }
 @media (max-width: 900px) {
   .app-layout { flex-direction: column; }
@@ -418,7 +421,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
         <div class="section-card-header">담당자 선택</div>
         <div class="section-card-body" style="gap:8px;">
           <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;">서류를 받을 담당자를 선택하세요</div>
-
+          <div style="font-size:10px;background:#e8f0fe;border-radius:6px;padding:5px 8px;color:#1565c0;margin-bottom:4px;">
+            참조: 박형진, 이병문 (자동 발송)
+          </div>
           <label class="checkbox-item" id="mgr-1-wrap">
             <input type="checkbox" id="mgr-1" value="sk.kim@bnctkorea.com" data-name="김상길">
             <div class="checkbox-box" id="mgr-1-box">✓</div>
@@ -755,47 +760,6 @@ function showSection(id) {
   state.activeDoc=id;
 }
 
-// ── 폼 데이터 수집 ──────────────────────────────────
-function collectFormFields() {
-  // 작업허가서 페이지 찾기 (permit-main)
-  var permitPage = document.getElementById('section-permit-main');
-  if(!permitPage) permitPage = document.querySelector('.doc-section[id*="permit"]');
-  if(!permitPage) permitPage = document.getElementById('formsContainer');
-  var fields = {};
-  if(!permitPage) return fields;
-
-  // 모든 input, textarea 수집
-  permitPage.querySelectorAll('input[type="text"], input[type="date"], input[type="time"], textarea, input[type="number"]').forEach(function(el) {
-    if(el.id) fields[el.id] = el.value || '';
-    else if(el.name) fields[el.name] = el.value || '';
-  });
-  // 체크박스 수집
-  permitPage.querySelectorAll('input[type="checkbox"]').forEach(function(el, i) {
-    var key = el.id || ('chk_permit_' + i);
-    fields[key] = el.checked;
-  });
-  // Section 2 서명 (id로 찾거나 section 내 첫 번째 캔버스)
-  var sig2canvas = document.getElementById('s2-sig');
-  if(!sig2canvas) {
-    // id가 없는 경우 permit section 내 첫 번째 sig-canvas 찾기
-    var permitSec = document.getElementById('section-permit-main');
-    if(permitSec) sig2canvas = permitSec.querySelector('.sig-canvas');
-  }
-  if(sig2canvas) {
-    var imgData = sig2canvas.toDataURL('image/png');
-    var empty = !sig2canvas.getContext('2d').getImageData(0,0,sig2canvas.width,sig2canvas.height).data.some(function(v,i){ return i%4!==3&&v>0; });
-    if(!empty) fields['sig2_img'] = imgData;
-  }
-  // s2 이름/날짜/시간도 수집
-  var s2name = document.getElementById('s2-name');
-  var s2date = document.getElementById('s2-date');
-  var s2time = document.getElementById('s2-time');
-  if(s2name) fields['s2-name'] = s2name.value;
-  if(s2date) fields['s2-date'] = s2date.value;
-  if(s2time) fields['s2-time'] = s2time.value;
-  return fields;
-}
-
 // ── 날짜/시간 자동입력 ──────────────────────────────────
 function autoFillDates() {
   var now = new Date();
@@ -829,28 +793,32 @@ function initSigPads(formId) {
   sec.querySelectorAll('.sig-canvas').forEach(function(canvas) {
     var ctx=canvas.getContext('2d');
     var drawing=false, lx=0, ly=0;
-    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.strokeStyle='#000000'; ctx.lineWidth=1.8; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='#1a2332'; ctx.lineWidth=1.8; ctx.lineCap='round'; ctx.lineJoin='round';
     function getPos(e) {
       var r=canvas.getBoundingClientRect();
       if(e.touches) return {x:e.touches[0].clientX-r.left, y:e.touches[0].clientY-r.top};
       return {x:e.clientX-r.left, y:e.clientY-r.top};
     }
     canvas.addEventListener('mousedown',function(e){ drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
-    canvas.addEventListener('mousemove',function(e){ if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; });
+    canvas.addEventListener('mousemove',function(e){ if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; canvas.closest('.sig-area').querySelector('.sig-label').style.display='none'; });
     canvas.addEventListener('mouseup',function(){ drawing=false; });
     canvas.addEventListener('mouseleave',function(){ drawing=false; });
     canvas.addEventListener('touchstart',function(e){ e.preventDefault(); drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
-    canvas.addEventListener('touchmove',function(e){ e.preventDefault(); if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; });
+    canvas.addEventListener('touchmove',function(e){ e.preventDefault(); if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; canvas.closest('.sig-area').querySelector('.sig-label').style.display='none'; });
     canvas.addEventListener('touchend',function(){ drawing=false; });
   });
 }
+function clearSig(btn) {
+  var area=btn.closest('.sig-area');
+  var canvas=area.querySelector('.sig-canvas');
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  area.querySelector('.sig-label').style.display='';
+}
 
 // ── 서명 블록 헬퍼 ───────────────────────────────────────
-function sigBlock(w,h,canvasId) {
+function sigBlock(w,h) {
   w=w||140; h=h||70;
-  var idAttr = canvasId ? ' id="'+canvasId+'"' : '';
-  return '<div class="sig-area" style="width:'+w+'px;height:'+h+'px;"><canvas class="sig-canvas"'+idAttr+' width="'+w+'" height="'+h+'"></canvas></div>';
+  return '<div class="sig-area" style="width:'+w+'px;height:'+h+'px;"><canvas class="sig-canvas" width="'+w+'" height="'+h+'"></canvas><div class="sig-label">여기에 서명하세요</div><button class="sig-clear-btn" onclick="clearSig(this)">지우기</button></div>';
 }
 
 // ── 제출 ─────────────────────────────────────────────────
@@ -879,12 +847,9 @@ async function doSubmit(recipients) {
 
     for(var pi=0;pi<allPages.length;pi++) {
       showLoadingOverlay(true,'PDF 변환 중... ('+(pi+1)+'/'+allPages.length+'페이지)');
-      await new Promise(function(r){ setTimeout(r,50); });
-      var page=allPages[pi];
-
-      // html2canvas로 캡처
-      var canvas=await html2canvas(page,{
-        scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',
+      await new Promise(function(r){ setTimeout(r,30); });
+      var canvas=await html2canvas(allPages[pi],{
+        scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',windowWidth:794,
         onclone:function(doc){
           doc.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"]').forEach(function(inp){
             if(inp.value){ var s=doc.createElement('span'); s.textContent=inp.value; s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;'; inp.parentNode.replaceChild(s,inp); }
@@ -893,12 +858,10 @@ async function doSubmit(recipients) {
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
         }
       });
-
-      var imgData=canvas.toDataURL('image/jpeg',0.92);
-      var pdfW=210;
-      var pdfH=(canvas.height/canvas.width)*pdfW;
-      if(pi>0) pdf.addPage([pdfW, pdfH]);
-      pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
+      var imgData=canvas.toDataURL('image/jpeg',0.95);
+      var pdfW=210, pdfH=(canvas.height*pdfW)/canvas.width;
+      if(pi>0) pdf.addPage();
+      pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH<=297?pdfH:297);
     }
 
     sections.forEach(function(s){ s.style.display=s.classList.contains('active')?'block':'none'; });
@@ -914,10 +877,7 @@ async function doSubmit(recipients) {
     // ② PDF → Base64 변환
     var pdfBase64 = pdf.output('datauristring').split(',')[1];
 
-    // ③ 폼 데이터 수집 (Section 1~2 입력값)
-    var formFields = collectFormFields();
-
-    // ④ 서명 링크 생성 (Supabase - PDF + 폼데이터 저장)
+    // ③ 서명 링크 생성 (Supabase)
     var signingUrl = null;
     try {
       showLoadingOverlay(true, '서명 링크 생성 중...');
@@ -930,8 +890,7 @@ async function doSubmit(recipients) {
           workerCount: workerCount,
           submitDate: dateStr,
           managers: recipients,
-          formFields: formFields,
-          pdfBase64: pdfBase64,
+          formData: { section3Name: recipients.map(function(r){return r.name;}).join(', ') }
         })
       });
       if(linkRes.ok) {
@@ -949,7 +908,10 @@ async function doSubmit(recipients) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         recipients: recipients,
-        ccRecipients: [],
+        ccRecipients: [
+          { name: '박형진', email: 'hj.park@bnctkorea.com' },
+          { name: '이병문', email: 'bm.lee@bnctkorea.com' }
+        ],
         pdfBase64: pdfBase64,
         fileName: fileName,
         projectName: project,
@@ -1170,7 +1132,7 @@ function buildPermitForm(f) {
     return '<div class="sig-inline" style="margin-top:8px;">'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">이름</div>'
       +'<input type="text" id="'+id+'-name" style="width:100%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:12px;font-family:inherit;padding:4px 0;"></div>'
-      +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">서명</div>'+sigBlock(120,52,id+'-sig')+'</div>'
+      +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">서명</div>'+sigBlock(120,52)+'</div>'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">날짜</div>'
       +'<input type="date" id="'+id+'-date" style="width:100%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:12px;font-family:inherit;"></div>'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">시간</div>'
@@ -1182,7 +1144,7 @@ function buildPermitForm(f) {
     return '<div class="sig-inline" style="margin-top:8px;">'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">이름</div>'
       +'<input type="text" id="'+id+'-name" value="'+name+'" readonly style="width:100%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:12px;font-family:inherit;padding:4px 0;background:#f8faff;color:#003087;font-weight:700;"></div>'
-      +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">서명</div>'+sigBlock(120,52,id+'-sig')+'</div>'
+      +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">서명</div>'+sigBlock(120,52)+'</div>'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">날짜</div>'
       +'<input type="date" id="'+id+'-date" value="'+today+'" readonly style="width:100%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:12px;font-family:inherit;background:#f8faff;"></div>'
       +'<div class="sig-inline-item"><div class="sig-inline-label" style="font-size:12px;font-weight:700;">시간</div>'
@@ -1222,12 +1184,12 @@ function buildPermitForm(f) {
   // Section 1
   +'<div class="permit-section"><div class="permit-section-title" style="font-size:13px;">Section 1: 일반 사항</div>'
   +'<table class="permit-table" style="font-size:12px;">'
-  +'<tr><th style="font-size:12px;width:110px;">작업명</th><td><input id="s1-work" type="text" value="'+proj+'" placeholder="작업명 입력" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
-  +'<tr><th style="font-size:12px;">작업 장소</th><td><input id="s1-place" type="text" placeholder="작업 장소 입력" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
-  +'<tr><th style="font-size:12px;">작업 업체</th><td><input id="s1-company" type="text" value="'+comp+'" placeholder="작업 업체명" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
+  +'<tr><th style="font-size:12px;width:110px;">작업명</th><td><input type="text" value="'+proj+'" placeholder="작업명 입력" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
+  +'<tr><th style="font-size:12px;">작업 장소</th><td><input type="text" placeholder="작업 장소 입력" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
+  +'<tr><th style="font-size:12px;">작업 업체</th><td><input type="text" value="'+comp+'" placeholder="작업 업체명" style="width:100%;border:none;outline:none;font-size:12px;font-family:inherit;"></td></tr>'
   +'<tr><th style="font-size:12px;">예상 작업 기간</th><td><div style="display:flex;align-items:center;gap:6px;font-size:12px;">'
-  +'<input id="s1-from" type="date" style="width:130px;border:none;border-bottom:1px solid #ddd;outline:none;font-size:12px;font-family:inherit;"> 부터 '
-  +'<input id="s1-to" type="date" style="width:130px;border:none;border-bottom:1px solid #ddd;outline:none;font-size:12px;font-family:inherit;"> 까지</div></td></tr>'
+  +'<input type="date" style="width:130px;border:none;border-bottom:1px solid #ddd;outline:none;font-size:12px;font-family:inherit;"> 부터 '
+  +'<input type="date" style="width:130px;border:none;border-bottom:1px solid #ddd;outline:none;font-size:12px;font-family:inherit;"> 까지</div></td></tr>'
   +'</table></div>'
 
   // 고위험군 작업 체크
