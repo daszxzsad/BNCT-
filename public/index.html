@@ -226,7 +226,31 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   .main-content { padding: 0; }
   .document-page { box-shadow: none; border: none; margin: 0; max-width: 100%; page-break-after: always; }
   .sig-clear-btn { display: none; }
+  .sig-expand-modal { display: none !important; }
 }
+
+/* 서명 확대 모달 */
+.sig-expand-modal {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  z-index: 9999; align-items: center; justify-content: center;
+}
+.sig-expand-modal.open { display: flex; }
+.sig-expand-inner {
+  background: #fff; border-radius: 12px; padding: 24px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 16px;
+  width: min(500px, 95vw);
+}
+.sig-expand-title { font-size: 15px; font-weight: 700; color: #1a2332; }
+.sig-expand-canvas-wrap {
+  border: 2px dashed #cbd5e0; border-radius: 8px; background: #fafafa;
+  position: relative; overflow: hidden; height: 200px;
+}
+.sig-expand-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+.sig-expand-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 13px; color: #ccc; pointer-events: none; }
+.sig-expand-btns { display: flex; gap: 10px; justify-content: flex-end; }
+.sig-expand-clear { padding: 8px 16px; border: 1.5px solid #cdd5e0; border-radius: 8px; background: white; font-size: 13px; cursor: pointer; color: #c62828; }
+.sig-expand-save { padding: 8px 20px; border: none; border-radius: 8px; background: #1565c0; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+.sig-expand-cancel { padding: 8px 16px; border: 1.5px solid #cdd5e0; border-radius: 8px; background: white; font-size: 13px; cursor: pointer; }
 @media (max-width: 900px) {
   .app-layout { flex-direction: column; }
   .sidebar { width: 100%; min-width: unset; position: relative; top: 0; height: auto; }
@@ -792,26 +816,28 @@ function initSigPads(formId) {
   if(!sec) return;
   sec.querySelectorAll('.sig-canvas').forEach(function(canvas) {
     var ctx=canvas.getContext('2d');
-    var drawing=false, lx=0, ly=0;
+    // 배경 흰색 초기화 (PDF 검은 배경 방지)
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.strokeStyle='#1a2332'; ctx.lineWidth=1.8; ctx.lineCap='round'; ctx.lineJoin='round';
-    function getPos(e) {
-      var r=canvas.getBoundingClientRect();
-      if(e.touches) return {x:e.touches[0].clientX-r.left, y:e.touches[0].clientY-r.top};
-      return {x:e.clientX-r.left, y:e.clientY-r.top};
-    }
-    canvas.addEventListener('mousedown',function(e){ drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
-    canvas.addEventListener('mousemove',function(e){ if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; canvas.closest('.sig-area').querySelector('.sig-label').style.display='none'; });
-    canvas.addEventListener('mouseup',function(){ drawing=false; });
-    canvas.addEventListener('mouseleave',function(){ drawing=false; });
-    canvas.addEventListener('touchstart',function(e){ e.preventDefault(); drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
-    canvas.addEventListener('touchmove',function(e){ e.preventDefault(); if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; canvas.closest('.sig-area').querySelector('.sig-label').style.display='none'; });
-    canvas.addEventListener('touchend',function(){ drawing=false; });
+
+    // 클릭 시 확대 모달 열기
+    canvas.addEventListener('click', function(e){
+      if(typeof openSigExpand === 'function') openSigExpand(canvas);
+    });
+    // 터치 탭도 모달 열기
+    var touchMoved=false;
+    canvas.addEventListener('touchstart',function(e){ touchMoved=false; e.preventDefault(); },{passive:false});
+    canvas.addEventListener('touchmove',function(e){ touchMoved=true; e.preventDefault(); },{passive:false});
+    canvas.addEventListener('touchend',function(e){
+      if(!touchMoved && typeof openSigExpand==='function') openSigExpand(canvas);
+    });
   });
 }
 function clearSig(btn) {
   var area=btn.closest('.sig-area');
   var canvas=area.querySelector('.sig-canvas');
-  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
   area.querySelector('.sig-label').style.display='';
 }
 
@@ -856,6 +882,19 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
+          /* ① 지우기 버튼 PDF에서 완전히 제거 */
+          doc.querySelectorAll('.sig-clear-btn').forEach(function(btn){ btn.style.display='none'; });
+          /* ② sig-canvas 배경 흰색 강제 지정 (JPEG 변환 시 투명→검정 방지) */
+          doc.querySelectorAll('.sig-canvas').forEach(function(c){
+            var ctx2=c.getContext('2d');
+            var img=c.toDataURL('image/png');
+            ctx2.fillStyle='#ffffff'; ctx2.fillRect(0,0,c.width,c.height);
+            var im=new Image(); im.src=img;
+            im.onload=function(){ ctx2.drawImage(im,0,0); };
+            c.style.background='#ffffff';
+          });
+          /* ③ sig-area 배경도 흰색 */
+          doc.querySelectorAll('.sig-area').forEach(function(a){ a.style.background='#ffffff'; a.style.border='1px solid #ccc'; });
         }
       });
       var imgData=canvas.toDataURL('image/jpeg',0.95);
@@ -1392,6 +1431,95 @@ function buildLiftingForm(f) {
   +'</tbody></table></div>'
   +'<div class="page-indicator">Page 1 of 3 · 기계적 인양 작업 양식</div></div>';
 }
+</script>
+
+<!-- 서명 확대 모달 -->
+<div id="sigExpandModal" class="sig-expand-modal">
+  <div class="sig-expand-inner">
+    <div class="sig-expand-title">✍️ 서명하기</div>
+    <div class="sig-expand-canvas-wrap">
+      <canvas id="sigExpandCanvas" class="sig-expand-canvas"></canvas>
+      <div id="sigExpandHint" class="sig-expand-hint">여기에 서명하세요</div>
+    </div>
+    <div class="sig-expand-btns">
+      <button class="sig-expand-clear" onclick="sigExpandClear()">지우기</button>
+      <button class="sig-expand-cancel" onclick="sigExpandClose()">취소</button>
+      <button class="sig-expand-save" onclick="sigExpandSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 서명 확대 모달 ─────────────────────────────────────────
+(function(){
+  var modal=document.getElementById('sigExpandModal');
+  var bigCanvas=document.getElementById('sigExpandCanvas');
+  var hint=document.getElementById('sigExpandHint');
+  var targetCanvas=null;
+  var drawing=false, lx=0, ly=0;
+  var ctx=null;
+
+  function resizeBigCanvas(){
+    var wrap=bigCanvas.parentElement;
+    bigCanvas.width=wrap.clientWidth||460;
+    bigCanvas.height=wrap.clientHeight||200;
+    ctx=bigCanvas.getContext('2d');
+    ctx.strokeStyle='#1a2332'; ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,bigCanvas.width,bigCanvas.height);
+  }
+
+  function getPos(e){
+    var r=bigCanvas.getBoundingClientRect();
+    if(e.touches) return {x:e.touches[0].clientX-r.left, y:e.touches[0].clientY-r.top};
+    return {x:e.clientX-r.left, y:e.clientY-r.top};
+  }
+  bigCanvas.addEventListener('mousedown',function(e){ drawing=true; var p=getPos(e); lx=p.x; ly=p.y; });
+  bigCanvas.addEventListener('mousemove',function(e){ if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; hint.style.display='none'; });
+  bigCanvas.addEventListener('mouseup',function(){ drawing=false; });
+  bigCanvas.addEventListener('mouseleave',function(){ drawing=false; });
+  bigCanvas.addEventListener('touchstart',function(e){ e.preventDefault(); drawing=true; var p=getPos(e); lx=p.x; ly=p.y; },{passive:false});
+  bigCanvas.addEventListener('touchmove',function(e){ e.preventDefault(); if(!drawing)return; var p=getPos(e); ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(p.x,p.y); ctx.stroke(); lx=p.x; ly=p.y; hint.style.display='none'; },{passive:false});
+  bigCanvas.addEventListener('touchend',function(){ drawing=false; });
+  modal.addEventListener('click',function(e){ if(e.target===modal) sigExpandClose(); });
+
+  window.openSigExpand=function(smallCanvas){
+    targetCanvas=smallCanvas;
+    modal.classList.add('open');
+    setTimeout(function(){
+      resizeBigCanvas();
+      // 기존 서명 있으면 옮겨오기
+      var sCtx=smallCanvas.getContext('2d');
+      var imgData=sCtx.getImageData(0,0,smallCanvas.width,smallCanvas.height);
+      var hasData=false;
+      for(var i=3;i<imgData.data.length;i+=4){ if(imgData.data[i]>0){ hasData=true; break; } }
+      if(hasData){
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,bigCanvas.width,bigCanvas.height);
+        var tmpImg=new Image(); tmpImg.src=smallCanvas.toDataURL('image/png');
+        tmpImg.onload=function(){ ctx.drawImage(tmpImg,0,0,bigCanvas.width,bigCanvas.height); hint.style.display='none'; };
+      }
+    },50);
+  };
+  window.sigExpandClear=function(){
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,bigCanvas.width,bigCanvas.height);
+    hint.style.display='';
+  };
+  window.sigExpandClose=function(){ modal.classList.remove('open'); targetCanvas=null; hint.style.display=''; };
+  window.sigExpandSave=function(){
+    if(!targetCanvas) return;
+    // 흰 배경으로 저장
+    var tmpC=document.createElement('canvas'); tmpC.width=targetCanvas.width; tmpC.height=targetCanvas.height;
+    var tCtx=tmpC.getContext('2d');
+    tCtx.fillStyle='#ffffff'; tCtx.fillRect(0,0,tmpC.width,tmpC.height);
+    tCtx.drawImage(bigCanvas,0,0,tmpC.width,tmpC.height);
+    var tCtxOrig=targetCanvas.getContext('2d');
+    tCtxOrig.clearRect(0,0,targetCanvas.width,targetCanvas.height);
+    tCtxOrig.fillStyle='#ffffff'; tCtxOrig.fillRect(0,0,targetCanvas.width,targetCanvas.height);
+    tCtxOrig.drawImage(tmpC,0,0);
+    var label=targetCanvas.closest('.sig-area').querySelector('.sig-label');
+    if(label) label.style.display='none';
+    sigExpandClose();
+  };
+})();
 </script>
 </body>
 </html>
