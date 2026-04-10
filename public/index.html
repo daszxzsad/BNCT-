@@ -871,6 +871,9 @@ async function doSubmit(recipients) {
     if(allPages.length===0) throw new Error('서류가 없습니다.');
     sections.forEach(function(s){ s.style.display='block'; });
 
+    /* 캡처 전 지우기 버튼 전체 숨김 */
+    document.querySelectorAll('.sig-clear-btn').forEach(function(b){ b.style.visibility='hidden'; });
+
     for(var pi=0;pi<allPages.length;pi++) {
       showLoadingOverlay(true,'PDF 변환 중... ('+(pi+1)+'/'+allPages.length+'페이지)');
       await new Promise(function(r){ setTimeout(r,30); });
@@ -882,19 +885,8 @@ async function doSubmit(recipients) {
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.fontSize='13px'; cb.parentNode.replaceChild(s,cb); });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
-          /* ① 지우기 버튼 PDF에서 완전히 제거 */
-          doc.querySelectorAll('.sig-clear-btn').forEach(function(btn){ btn.style.display='none'; });
-          /* ② sig-canvas 배경 흰색 강제 지정 (JPEG 변환 시 투명→검정 방지) */
-          doc.querySelectorAll('.sig-canvas').forEach(function(c){
-            var ctx2=c.getContext('2d');
-            var img=c.toDataURL('image/png');
-            ctx2.fillStyle='#ffffff'; ctx2.fillRect(0,0,c.width,c.height);
-            var im=new Image(); im.src=img;
-            im.onload=function(){ ctx2.drawImage(im,0,0); };
-            c.style.background='#ffffff';
-          });
-          /* ③ sig-area 배경도 흰색 */
-          doc.querySelectorAll('.sig-area').forEach(function(a){ a.style.background='#ffffff'; a.style.border='1px solid #ccc'; });
+          doc.querySelectorAll('.sig-clear-btn').forEach(function(b){ b.style.display='none'; b.style.visibility='hidden'; });
+          doc.querySelectorAll('.sig-area').forEach(function(a){ a.style.background='#ffffff'; });
         }
       });
       var imgData=canvas.toDataURL('image/jpeg',0.95);
@@ -902,6 +894,9 @@ async function doSubmit(recipients) {
       if(pi>0) pdf.addPage();
       pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH<=297?pdfH:297);
     }
+
+    /* 캡처 끝 - 지우기 버튼 복원 */
+    document.querySelectorAll('.sig-clear-btn').forEach(function(b){ b.style.visibility=''; });
 
     sections.forEach(function(s){ s.style.display=s.classList.contains('active')?'block':'none'; });
 
