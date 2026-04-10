@@ -36,11 +36,23 @@ table.pt input,table.pt textarea{width:100%;border:none;outline:none;font-size:1
 .si-lbl{font-size:10px;font-weight:700;color:#555;margin-bottom:3px;}
 .si input{width:100%;padding:4px 7px;border:1px solid #ddd;border-radius:4px;font-size:11.5px;font-family:inherit;background:white;}
 .si input[readonly]{background:#f0f4ff;color:#003087;font-weight:700;}
-.sigpad{border:2px solid #ccc;border-radius:6px;position:relative;background:white;cursor:crosshair;overflow:hidden;height:58px;}
+.sigpad{border:2px solid #ccc;border-radius:6px;position:relative;background:white;cursor:pointer;overflow:hidden;height:58px;}
 .sigpad.ro{background:#f5f5f5;cursor:default;border-color:#e0e0e0;}
 .sigpad canvas{display:block;width:100%;height:100%;}
 .sighint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb;pointer-events:none;}
 .sigclr{position:absolute;top:3px;right:3px;background:#fee2e2;color:#c62828;border:none;border-radius:3px;font-size:10px;padding:2px 6px;cursor:pointer;font-family:inherit;}
+/* 서명 확대 모달 */
+.sig-big-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;}
+.sig-big-modal.open{display:flex;}
+.sig-big-inner{background:#fff;border-radius:12px;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,0.3);display:flex;flex-direction:column;gap:14px;width:min(480px,95vw);}
+.sig-big-title{font-size:14px;font-weight:700;color:#1a2332;font-family:inherit;}
+.sig-big-wrap{border:2px dashed #ccc;border-radius:8px;background:#fafafa;position:relative;overflow:hidden;height:180px;}
+.sig-big-canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none;}
+.sig-big-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:#ccc;pointer-events:none;font-family:inherit;}
+.sig-big-btns{display:flex;gap:10px;justify-content:flex-end;}
+.sig-big-clear{padding:7px 14px;border:1.5px solid #cdd;border-radius:8px;background:white;font-size:12px;cursor:pointer;color:#c62828;font-family:inherit;}
+.sig-big-save{padding:7px 18px;border:none;border-radius:8px;background:#003087;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.sig-big-cancel{padding:7px 14px;border:1.5px solid #cdd;border-radius:8px;background:white;font-size:12px;cursor:pointer;font-family:inherit;}
 .page-ind{text-align:right;font-size:10px;color:#aaa;margin-top:8px;}
 .ld{display:none;position:fixed;inset:0;background:rgba(0,48,135,0.65);align-items:center;justify-content:center;z-index:9999;}
 .ldbox{background:white;border-radius:14px;padding:36px 52px;text-align:center;}
@@ -49,6 +61,19 @@ table.pt input,table.pt textarea{width:100%;border:none;outline:none;font-size:1
 .done{display:none;position:fixed;inset:0;background:rgba(0,48,135,0.7);align-items:center;justify-content:center;z-index:9999;}
 .donebox{background:white;border-radius:18px;padding:44px 52px;text-align:center;max-width:380px;width:90%;}
 .errbar{background:#fee2e2;border-left:4px solid #c62828;border-radius:6px;padding:12px 16px;font-size:13px;color:#c62828;margin-bottom:14px;display:none;}
+
+/* 서명 확대 모달 */
+.sig-xmodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;}
+.sig-xmodal.open{display:flex;}
+.sig-xbox{background:#fff;border-radius:12px;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,0.3);display:flex;flex-direction:column;gap:14px;width:min(480px,95vw);}
+.sig-xtitle{font-size:14px;font-weight:700;color:#1a2332;}
+.sig-xwrap{border:2px dashed #ccc;border-radius:8px;background:#fafafa;position:relative;overflow:hidden;height:190px;}
+.sig-xcanvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none;}
+.sig-xhint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;color:#ccc;pointer-events:none;}
+.sig-xbtns{display:flex;gap:10px;justify-content:flex-end;}
+.sig-xclr{padding:7px 14px;border:1.5px solid #cdd5e0;border-radius:7px;background:white;font-size:12px;cursor:pointer;color:#c62828;font-family:inherit;}
+.sig-xsave{padding:7px 18px;border:none;border-radius:7px;background:#003087;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.sig-xcancel{padding:7px 14px;border:1.5px solid #cdd5e0;border-radius:7px;background:white;font-size:12px;cursor:pointer;font-family:inherit;}
 </style>
 </head>
 <body>
@@ -119,8 +144,8 @@ function getSig(id){
   return hasSig?flat.toDataURL('image/jpeg',0.85):null;
 }
 function mkPad(id,ro){
-  return '<div class="sigpad'+(ro?' ro':'')+'"><canvas id="'+id+'" width="300" height="58"></canvas>'
-    +(ro?'':'<div class="sighint">서명하세요</div><button class="sigclr" onclick="clrPad(this)">지우기</button>')+'</div>';
+  return '<div class="sigpad'+(ro?' ro':'')+'" '+(ro?'':' style="cursor:pointer;" onclick="openBigSig(this)"')+' ><canvas id="'+id+'" width="300" height="58"></canvas>'
+    +(ro?'':'<div class="sighint">서명하세요 (클릭하면 크게 서명 가능)</div>')+'</div>';
 }
 function mkSigRow(nid,sid,did,tid,nv,dv,tv,ro){
   var r=ro?'readonly':'',s=ro?'style="background:#f0f4ff;color:#003087;font-weight:700;"':'';
@@ -496,6 +521,86 @@ function makePDF(sd){
 }
 
 loadPermit();
+</script>
+
+<!-- 서명 확대 모달 -->
+<div id="bigSigModal" class="sig-big-modal">
+  <div class="sig-big-inner">
+    <div class="sig-big-title">✍️ 서명하기 (크게)</div>
+    <div class="sig-big-wrap">
+      <canvas id="bigSigCanvas" class="sig-big-canvas"></canvas>
+      <div id="bigSigHint" class="sig-big-hint">여기에 서명하세요</div>
+    </div>
+    <div class="sig-big-btns">
+      <button class="sig-big-clear" onclick="bigSigClear()">지우기</button>
+      <button class="sig-big-cancel" onclick="bigSigClose()">취소</button>
+      <button class="sig-big-save" onclick="bigSigSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var modal=document.getElementById('bigSigModal');
+  var bigC=document.getElementById('bigSigCanvas');
+  var hint=document.getElementById('bigSigHint');
+  var targetPad=null, ctx=null, drawing=false, lx=0, ly=0;
+
+  function initCtx(){
+    bigC.width=bigC.parentElement.clientWidth||440;
+    bigC.height=bigC.parentElement.clientHeight||180;
+    ctx=bigC.getContext('2d');
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,bigC.width,bigC.height);
+    ctx.strokeStyle='#1a2332'; ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round';
+  }
+  function gp(e){
+    var r=bigC.getBoundingClientRect();
+    if(e.touches) return {x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top};
+    return {x:e.clientX-r.left,y:e.clientY-r.top};
+  }
+  bigC.addEventListener('mousedown',function(e){drawing=true;var p=gp(e);lx=p.x;ly=p.y;});
+  bigC.addEventListener('mousemove',function(e){if(!drawing)return;var p=gp(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.stroke();lx=p.x;ly=p.y;hint.style.display='none';});
+  bigC.addEventListener('mouseup',function(){drawing=false;});
+  bigC.addEventListener('mouseleave',function(){drawing=false;});
+  bigC.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var p=gp(e);lx=p.x;ly=p.y;},{passive:false});
+  bigC.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;var p=gp(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.stroke();lx=p.x;ly=p.y;hint.style.display='none';},{passive:false});
+  bigC.addEventListener('touchend',function(){drawing=false;});
+  modal.addEventListener('click',function(e){if(e.target===modal)bigSigClose();});
+
+  window.openBigSig=function(pad){
+    var smallC=pad.querySelector('canvas');
+    if(!smallC||pad.classList.contains('ro')) return;
+    targetPad=pad;
+    modal.classList.add('open');
+    hint.style.display='';
+    setTimeout(function(){
+      initCtx();
+      // 기존 서명 복사
+      var sc=smallC.getContext('2d');
+      var d=sc.getImageData(0,0,smallC.width,smallC.height).data;
+      var has=false; for(var i=3;i<d.length;i+=4){if(d[i]>0){has=true;break;}}
+      if(has){
+        var t=new Image(); t.src=smallC.toDataURL('image/png');
+        t.onload=function(){ctx.drawImage(t,0,0,bigC.width,bigC.height);hint.style.display='none';};
+      }
+    },50);
+  };
+  window.bigSigClear=function(){
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,bigC.width,bigC.height); hint.style.display='';
+  };
+  window.bigSigClose=function(){modal.classList.remove('open');targetPad=null;};
+  window.bigSigSave=function(){
+    if(!targetPad) return;
+    var smallC=targetPad.querySelector('canvas');
+    // 흰 배경 + 서명 복사
+    var sCtx=smallC.getContext('2d');
+    sCtx.fillStyle='#ffffff'; sCtx.fillRect(0,0,smallC.width,smallC.height);
+    sCtx.drawImage(bigC,0,0,smallC.width,smallC.height);
+    var h=targetPad.querySelector('.sighint');
+    if(h) h.style.display='none';
+    bigSigClose();
+  };
+})();
 </script>
 </body>
 </html>
