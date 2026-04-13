@@ -904,9 +904,15 @@ async function doSubmit(recipients) {
         }
       });
       var imgData=canvas.toDataURL('image/jpeg',0.95);
+      /* A4 = 210×297mm, 비율 유지하며 피팅 */
       var pdfW=210, pdfH=(canvas.height*pdfW)/canvas.width;
+      if(pdfH>297){
+        /* 내용이 A4보다 길면 → A4 높이에 맞추고 너비도 비례 축소 */
+        var scale297=297/pdfH;
+        pdfH=297; pdfW=210*scale297;
+      }
       if(pi>0) pdf.addPage();
-      pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH<=297?pdfH:297);
+      pdf.addImage(imgData,'JPEG',(210-pdfW)/2,0,pdfW,pdfH);
     }
 
     /* 캡처 끝 - 숨긴 요소 복원 */
