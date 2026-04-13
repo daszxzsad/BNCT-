@@ -336,10 +336,11 @@ async function doSave(){
 
 // ── PDF 생성 (jsPDF + 나눔고딕) ──────────────────────
 function makePDF(sd){
-  var J=window.jspdf.jsPDF;
+  var J=window.jspdf&&window.jspdf.jsPDF;
+  if(!J){ alert('PDF 라이브러리 로드 실패. 페이지를 새로고침 후 다시 시도해주세요.'); return; }
   var doc=new J({orientation:'p',unit:'mm',format:'a4'});
-  regFont(doc);
-  doc.setFont('KR','normal');
+  try{ regFont(doc); doc.setFont('KR','normal'); }
+  catch(e){ console.warn('폰트 로드 실패, 기본 폰트 사용:', e); }
 
   var M=14,TW=181,y=10;
   var NV=[0,48,135],GR=[230,230,230],LG=[200,200,200];
@@ -350,8 +351,8 @@ function makePDF(sd){
   function setD(r,g,b){doc.setDrawColor(r,g,b);}
   function setT(r,g,b){doc.setTextColor(r,g,b);}
   function setLW(w){doc.setLineWidth(w);}
-  function bold(){doc.setFont('KR','bold');}
-  function normal(){doc.setFont('KR','normal');}
+  function bold(){try{doc.setFont('KR','bold');}catch(e){}}
+  function normal(){try{doc.setFont('KR','normal');}catch(e){}}
 
   function sh(t,yy){
     setF(NV[0],NV[1],NV[2]);setD(NV[0],NV[1],NV[2]);
