@@ -929,8 +929,8 @@ async function doSubmit(recipients) {
     var company=document.getElementById('companyName').value||'(미입력)';
     var workerCount=document.getElementById('workerCount').value;
 
-    // ② PDF → Base64 변환
-    var pdfBase64 = pdf.output('datauristring').split(',')[1];
+    // ② PDF → 브라우저 직접 저장
+    pdf.save(fileName);
 
     // ③ 서명 링크 생성 (Supabase)
     var signingUrl = null;
@@ -956,7 +956,7 @@ async function doSubmit(recipients) {
       console.warn('링크 생성 실패 (이메일은 계속 발송):', linkErr);
     }
 
-    // ④ 이메일 발송 (PDF 첨부 + 서명 링크)
+    // ④ 이메일 발송 (서명 링크 + 서류정보만, PDF 첨부 없음)
     showLoadingOverlay(true, '이메일 발송 중...');
     var response = await fetch('/api/send-email', {
       method: 'POST',
@@ -967,7 +967,6 @@ async function doSubmit(recipients) {
           { name: '박형진', email: 'hj.park@bnctkorea.com' },
           { name: '이병문', email: 'bm.lee@bnctkorea.com' }
         ],
-        pdfBase64: pdfBase64,
         fileName: fileName,
         projectName: project,
         companyName: company,
@@ -1018,6 +1017,7 @@ function showSuccessScreen(recipients, dateStr, signingUrl) {
 }
 
 function goSplash() {
+  clearTimeout(idleTimer); idleTimer = null;
   // 초기화
   var fc=document.getElementById('formsContainer');
   fc.innerHTML=''; fc.style.display='';
@@ -1054,6 +1054,22 @@ function goSplash() {
   stopSplashAnim = initSplashParticles();
   setTimeout(function(){ splash.style.opacity='1'; }, 30);
 }
+
+// ── 30초 무입력 자동복귀 ─────────────────────────────────
+var idleTimer = null;
+var IDLE_SEC = 30;
+function resetIdleTimer() {
+  var welcome = document.getElementById('welcomeScreen');
+  if (!welcome || welcome.style.display !== 'none') return; // 대기화면이면 동작 안 함
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(function() {
+    showToast('30초간 입력이 없어 대기화면으로 돌아갑니다.', 'info');
+    setTimeout(function() { goSplash(); }, 1500);
+  }, IDLE_SEC * 1000);
+}
+['input','change','click','touchstart','keydown','scroll'].forEach(function(ev) {
+  document.addEventListener(ev, resetIdleTimer, { passive: true });
+});
 
 // ── RESET ────────────────────────────────────────────────
 function resetAll(skipModal) {
