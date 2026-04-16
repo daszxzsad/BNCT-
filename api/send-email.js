@@ -10,12 +10,12 @@ module.exports = async function handler(req, res) {
   try {
     const {
       recipients, ccRecipients,
-      pdfBase64, fileName,
+      fileName,
       projectName, companyName, workerCount, submitDate, docCount,
       signingUrl
     } = req.body;
  
-    if (!recipients || !pdfBase64) {
+    if (!recipients) {
       return res.status(400).json({ error: '필수 데이터 누락' });
     }
  
@@ -27,7 +27,6 @@ module.exports = async function handler(req, res) {
       },
     });
  
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
     const ccList = (ccRecipients || []).map(r => `"${r.name}" <${r.email}>`).join(', ');
     const toList = recipients.map(r => `"${r.name}" <${r.email}>`).join(', ');
  
@@ -60,7 +59,7 @@ module.exports = async function handler(req, res) {
           </table>
           ${signingBtnHtml}
           <div style="background:#e8f0fe;border-left:4px solid #1565c0;padding:12px 16px;border-radius:4px;font-size:13px;color:#333;margin-bottom:16px;">
-            PDF 파일이 첨부되어 있습니다. 확인 후 보관해 주세요.
+            PDF는 서류 제출 단말기에서 자동 저장되었습니다.
           </div>
           <p style="font-size:11px;color:#aaa;margin-top:20px;text-align:center;">
             본 메일은 BNCT 자산관리팀 안전서류 시스템에서 자동 발송되었습니다.
@@ -75,11 +74,6 @@ module.exports = async function handler(req, res) {
       cc: ccList,
       subject: `[BNCT 안전서류] ${projectName} - ${companyName} (${submitDate})`,
       html: htmlBody,
-      attachments: [{
-        filename: fileName,
-        content: pdfBuffer,
-        contentType: 'application/pdf',
-      }],
     });
  
     return res.status(200).json({ success: true });
