@@ -223,9 +223,10 @@ function renderForm(){
           return '<tr><td style="width:20px;text-align:center;font-weight:700;border:1px solid #ccc;padding:3px;">'+r[0]+'</td><td style="border:1px solid #ccc;padding:3px 5px;">'+r[1]+'</td></tr>';
         }).join('')
       +'<tr style="background:#fff3e0;"><td style="text-align:center;font-weight:900;border:1px solid #ccc;padding:3px;">17</td><td style="border:1px solid #ccc;padding:3px 5px;"><strong>안전조치 미비로 인하여 현장 관리감독자 및 안전담당자의 작업중단 및 개선요청 시 즉각 이행한다.</strong></td></tr>'
-      +'<tr style="background:#fff3e0;"><td style="text-align:center;font-weight:900;border:1px solid #ccc;padding:3px;">18</td><td style="border:1px solid #ccc;padding:3px 5px;"><strong>*무관용의 법칙* 안전수칙 위반 시 경고장 발부 및 터미널 출입금지 조치한다.</strong></td></tr>'
+      +'<tr style="background:#fff3e0;"><td style="text-align:center;font-weight:900;border:1px solid #ccc;padding:3px;">18</td><td style="border:1px solid #ccc;padding:3px 5px;"><strong>*무관용의 법칙* 안전수칙 위반 시 경고장 발부 및 터미널 출입금지 조치한다. (1회 적발시: 경고, 2회 적발시: 출입금지 3개월)</strong></td></tr>'
       +'</tbody></table>'
-      +'<div style="font-size:11.5px;font-weight:700;text-align:center;line-height:1.8;padding:8px;border:1px solid #ccc;background:#fafafa;margin:10px 0;">상기 본인은 위 준수사항을 성실하게 이행하겠으며 본인의 과실로 인한 사고 발생 시<br>책임질것을 서약합니다.</div>'
+      +'<div style="font-size:11.5px;font-weight:700;text-align:center;line-height:1.8;padding:8px;border:1px solid #ccc;background:#fafafa;margin:10px 0;">상기 본인은 위 준수사항을 성실하게 이행하겠으며 본인의 과실로 인한 사고 발생 시<br>책임질것을 서약합니다. 안전을 최우선으로 생각하며 안전하게 작업하겠습니다.</div>'
+      +'<div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;letter-spacing:3px;">2 0 2 &nbsp;&nbsp; 년 &nbsp;&nbsp;&nbsp; 월 &nbsp;&nbsp;&nbsp; 일</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;border:1px solid #ccc;font-size:11px;margin-bottom:8px;">'
       +'<div style="padding:5px 8px;border-right:1px solid #ccc;"><div style="font-weight:700;">공사명</div><div>'+proj+'</div></div>'
       +'<div style="padding:5px 8px;border-right:1px solid #ccc;"><div style="font-weight:700;">소 속</div><div>'+comp+'</div></div>'
@@ -242,11 +243,10 @@ function renderForm(){
 
   // ── 작업허가서 ──────────────────────────────────────
   function buildPermit(){
-    var i2=['본인은 위험성 평가를 비롯하여 본 작업 활동과 관련하여 필요한 관리 양식들을 검토하였다.','본인은, 조치가 적절히 이루어졌는지 확실히 하기 위해 관계자와 협의하였다.','본인은, 첨부된 위험성 평가 및 해당 관리 양식에 따라 본 작업 활동을 조정 및 관리할 능력이 있다.','본인은 작업자 및 작업에 영향을 받는 사람의 건강 및 안전을 확보하기 위해 필요한 모든 조치를 취할것이다.','본인은, 작업 수행자가 위험성 평가 및 각 관리 양식은 물론 아래 Section 5 의 지시사항에 대한 설명을 들었고 해당 내용들을 이해했음을 확인하여야 한다.','본인은, 작업 활동 전체에 걸쳐 위험요소를 관찰하고 관리하여야 한다.','본인은, 당 작업 허가 승인 담당자에게 본 허가서를 검토하고, 등록 및 번호를 부여하도록 요청하는 바이다.'];
-    var i3=['본인은, 위험성 평가 및 필요한 관리 양식을 포함하여 관련된 모든 문서들의 내용을 검토하였으며 작업 업체/작업자에게 의견을 제시하였다.','본인은, 작업 업체/작업자를 담당하는 자로서, 작업 방식과 제안된 관리방안들이 시행되는 것을 모니터링하여 BNCT 터미널 안전 기준이 달성될 수 있도록 할 것이다.','본인은, 해당 작업 구역의 관련자에게 작업 시행 구간, 완결해야 할 모든 작업 내역, 작업 관리감독 및 강화를 위해 수립된 절차들에 대한 정보를 알려주었다.'];
+    var i2=['본인은 위험성 평가를 비롯하여 본 작업 활동과 관련하여 필요한 관리 양식들을 검토하였다.','본인은, 조치가 적절히 이루어졌는지 확실히 하기 위해 관계자와 협의하였다.','본인은, 첨부된 위험성 평가 및 해당 관리 양식에 따라 본 작업 활동을 조정 및 관리할 능력이 있다.','본인은 작업자 및 작업에 영향을 받는 사람의 건강 및 안전을 확보하기 위해 필요한 모든 조치를 취할것이다.','본인은, 작업 수행자가 위험성 평가 및 각 관리 양식은 물론 아래 Section 5 의 "작업허가/작업구역 출입 관련 지시사항"에 대한 설명을 들었고 해당 내용들을 이해했음을 확인하여야 한다.','본인은, 작업 활동 전체에 걸쳐 위험요소를 관찰하고 관리하여야 한다.','본인은, 당 작업 허가 승인 담당자에게 본 허가서를 검토하고, 등록 및 번호를 부여하도록 요청하는 바이다.'];
+    var i3=['본인은, 위험성 평가 및 필요한 관리 양식을 포함하여 관련된 모든 문서들의 내용을 검토하였으며 작업 업체/작업자에게 의견을 제시하였다.','본인은, 작업 업체/작업자를 담당하는 자로서, 작업 방식과 제안된 관리방안들이 시행되는 것을 모니터링하여 BNCT 터미널 안전 기준이 달성될 수 있도록 할 것이다.','본인은, 해당 작업 구역의 관련자에게 작업 시행 구간, 작업 업체/작업자가 완결해야 할 모든 작업 내역, 작업 관리감독 및 강화를 위해 수립된 절차들에 대한 정보를 알려주었다.'];
     var i4=['본인은, 위험성 평가를 비롯하여 필요한 관리 양식을 포함한 모든 관련 문서 내용을 검토하였다.','본인은 당 작업 허가서를 등록하고, 작업 번호를 부여하였으며, 관련된 모든 문서 상에 해당 작업 번호를 기입하였다.'];
     var h='';
-    // Page 1
     h+='<div class="card"><div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #003087;padding-bottom:8px;margin-bottom:10px;">'
       +'<div style="background:#003087;color:white;padding:2px 8px;font-size:10px;font-weight:700;border-radius:3px;">작업허가서</div>'
       +'<div style="font-size:20px;font-weight:900;color:#003087;">작업허가서 양식</div></div>'
@@ -262,46 +262,49 @@ function renderForm(){
       +'<input type="date" value="'+(f['s1-to']||'')+'" readonly style="border:none;background:#f5f5f5;outline:none;font-size:11.5px;font-family:inherit;"> 까지</div></td></tr>'
       +'</table>'
       +'<div style="border:1px solid #ccc;padding:8px;font-size:11.5px;margin-top:4px;">'
-      +'<strong>고위험군 작업:</strong><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-top:6px;">'
+      +'<strong>본 작업허가서 발급이 필요한 특정 고위험군 작업:</strong> 해당하는 네모 칸에 표시를 하고 관련 양식을 첨부하시오.'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-top:6px;">'
       +['화기 작업','토공/굴착 작업','밀폐공간출입작업','설비/장비 격리','고소 작업','기계적 인양 작업','고압 스위치 접근 및 시험 작업 허가','전기 유지보수작업'].map(function(t){return '<label style="display:flex;align-items:center;gap:5px;"><input type="checkbox" disabled> '+t+'</label>';}).join('')
       +'</div></div>'
       +'<div class="stitle" style="margin-top:10px;">Section 2: 승인 요청 (작업 업체 관리 감독자 작성) <span class="ro-badge">작성 완료 (읽기전용)</span></div>'
-      +'<div class="chklist">'+i2.map(roChk).join('')+'</div>'
+      +'<div class="chklist">본인은 고위험군 작업을 한 허가를 요청하는 사람으로써, 다음 사항을 확인한다.<br>'+i2.map(roChk).join('')+'</div>'
       +mkSigRow('s2n','s2s','s2d','s2t',f['s2-name']||'',f['s2-date']||today,f['s2-time']||nowT,true)
       +'<div class="stitle" style="margin-top:10px;">Section 3: 작업업체 검토 (업무담당자 작성) <span class="ed-badge">✏ 서명 필요</span></div>'
-      +'<div class="chklist">'+i3.map(function(t,i){return edChk('c3'+i,t);}).join('')+'</div>'
+      +'<div class="chklist">본인은 모든 문서들을 검토하였고, 의견 제시했다.<br>'+i3.map(function(t,i){return edChk('c3'+i,t);}).join('')+'</div>'
       +mkSigRow('s3n','s3s','s3d','s3t',mgr3,today,nowT,false)
       +'<div class="stitle" style="margin-top:10px;">Section 4: 승인 (작업허가 승인 담당자가 작성) <span class="ed-badge">✏ 서명 필요</span></div>'
-      +'<div class="chklist">'+i4.map(function(t,i){return edChk('c4'+i,t);}).join('')+'</div>'
+      +'<div class="chklist">작업 활동 계획이 완결되었고, 위험성 평가 및 필요한 관리양식에 따라 해당 작업 착수를 승인한다는 것을 의미한다. 본인은 작업 허가 승인 담당자로서, 아래와 같은 사항을 확인한다.<br>'+i4.map(function(t,i){return edChk('c4'+i,t);}).join('')+'</div>'
       +mkSigRow('s4n','s4s','s4d','s4t','이병문',today,nowT,false)
       +'<div style="border:1px solid #ccc;border-top:none;padding:6px 8px;font-size:11.5px;">'
       +'<strong>제한 사항:</strong> 본 작업 승인 사항은 아래 명시된 시점 혹은 일시 까지만 유효하다.'
       +'<div style="display:flex;gap:10px;margin-top:4px;">날짜: <input id="s4ld" type="date" style="border:none;border-bottom:1px solid #ccc;outline:none;font-size:11.5px;font-family:inherit;"> 시간: <input id="s4lt" type="time" style="border:none;border-bottom:1px solid #ccc;outline:none;font-size:11.5px;font-family:inherit;"></div>'
+      +'<div style="margin-top:4px;font-size:11.5px;"><label style="display:flex;align-items:center;gap:6px;"><input type="checkbox"> 작업허가 연장 요청이 있을 경우, Section 7 을 작성하시오.</label></div>'
       +'</div><div class="page-ind">Page 1 of 2 · 작업허가서 양식</div></div>';
-    // Page 2
     h+='<div class="card"><div style="display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #003087;padding-bottom:6px;margin-bottom:10px;">'
       +'<div style="background:#003087;color:white;padding:2px 8px;font-size:10px;font-weight:700;border-radius:3px;">작업허가서</div>'
       +'<div style="font-size:17px;font-weight:900;color:#003087;">작업허가서 양식 (계속)</div></div>'
-      +'<div class="stitle">Section 5: 작업허가/작업구역 출입관련 지시 사항</div>'
-      +'<div class="chklist">'+['본인의 역할 및 업무, 작업 범위에 대해 숙지하여야 한다.','위험성 평가 및 관리 양식을 읽고, 설명을 들었으며, 이를 이해하고 있어야 한다.','각 조 작업을 시작할 때마다 현장 감독자에게 알려야 하며, 작업허가/출입 관련 지시 및 허가를 받아 작업을 시작하도록 한다.','교대 근무를 할 경우, 작업 시작 전/종료 후 서명한다. (Section 7 참고)','작업 하는 동안 새로운 위험요소가 발견되었다면, 즉시 현장 감독자와 기타 작업과 연관된 당사자들에게 통보한다.'].map(function(t,i){return '<div style="display:flex;gap:8px;"><span style="font-weight:700;min-width:16px;">'+(i+1)+'.</span><span>'+t+'</span></div>';}).join('')+'</div>'
-      +'<div class="stitle" style="margin-top:10px;">Section 6: 작업업체 관리감독자 <span class="ed-badge">✏ 입력 가능</span></div>'
+      +'<div class="stitle">Section 5: 작업허가/작업구역 출입관련 지시 사항 (작업자 작성)</div>'
+      +'<div class="chklist"><strong>Note: 작업자는 반드시 아래 각각의 지시사항을 준수하여야 한다.</strong><br>'
+      +['본인의 역할 및 업무, 작업 범위에 대해 숙지하여야 한다.','위험성 평가 및 관리 양식을 읽고, 설명을 들었으며, 이를 이해하고 있어야 한다. 확실하지 않은 사항에 대해서는 질문하도록 한다. 만약 작업 전에 우려사항이 있다면 보고하도록 한다.','각 조 작업을 시작할 때마다 현장 감독자에게 알려야 하며, 작업허가/출입 관련 지시 및 허가를 받아 작업을 시작하도록 한다.','교대 근무를 할 경우, 작업 시작 전/종료 후 서명한다. (Section 7 참고)','작업 하는 동안 새로운 위험요소가 발견되었다면, 즉시 해당 작업 업체/작업자들의 현장 감독자와 기타 작업과 연관된 당사자들에게 통보한다.'].map(function(t,i){return '<div style="display:flex;gap:8px;"><span style="font-weight:700;min-width:16px;">'+(i+1)+'.</span><span>'+t+'</span></div>';}).join('')+'</div>'
+      +'<div class="stitle" style="margin-top:10px;">Section 6: 작업업체 관리감독자 (해당할 경우) <span class="ed-badge">✏ 입력 가능</span></div>'
       +'<table class="pt"><tr><th>작업시작 전 논의사항</th><td><textarea id="s6a" style="width:100%;border:none;outline:none;font-size:11.5px;font-family:inherit;height:50px;resize:none;"></textarea></td></tr>'
       +'<tr><th>점검/확인 시점</th><td><input id="s6b" style="width:100%;border:none;outline:none;font-size:11.5px;font-family:inherit;"></td></tr>'
       +'<tr><th>작업 완료 후 최종 점검</th><td style="display:flex;gap:8px;align-items:center;font-size:11.5px;">날짜: <input id="s6c" type="date" style="border:none;border-bottom:1px solid #ddd;outline:none;font-size:11.5px;font-family:inherit;"> 시간: <input id="s6d" type="time" style="border:none;border-bottom:1px solid #ddd;outline:none;font-size:11.5px;font-family:inherit;"></td></tr>'
       +'<tr><th>변화/변경사항</th><td><textarea id="s6e" style="width:100%;border:none;outline:none;font-size:11.5px;font-family:inherit;height:36px;resize:none;"></textarea></td></tr></table>'
-      +'<div class="stitle" style="margin-top:10px;">Section 7: 허가 기간 연장 <span class="ed-badge">✏ 입력 가능</span></div>'
-      +'<div class="chklist"><label><input type="checkbox" id="c71"> <span>본인은, 위험성 평가를 비롯하여 필요한 관리 양식을 포함한 모든 관련 문서 내용을 검토하였다.</span></label>'
-      +'<label><input type="checkbox" id="c72"> <span>본 허가서를 작업 허가 목록에 수정 반영하였다. 작업 연장은 한번만 할 수 있으며, 최대 7일까지 가능하다.</span></label>'
+      +'<div class="stitle" style="margin-top:10px;">Section 7: 허가 기간 연장 (당초 작업허가 승인자가 작성) <span class="ed-badge">✏ 입력 가능</span></div>'
+      +'<div class="chklist">작업계획서 검토 후 위험성 평가 및 관리 양식에 따라 작업 연장을 허가하였다.<br>'
+      +'<label><input type="checkbox" id="c71"> <span>본인은, 위험성 평가를 비롯하여 필요한 관리 양식을 포함한 모든 관련 문서 내용을 검토하였다.</span></label>'
+      +'<label><input type="checkbox" id="c72"> <span>본 허가서를 작업 허가 목록에 수정 반영하였다. 작업 연장은 한번만 할 수 있으며, 당초 작업 완료일 기준일로부터 최대 7일까지 가능하다.</span></label>'
       +'<div style="margin-top:4px;font-size:11.5px;">기간 연장: <input id="s7f" type="date" style="border:none;border-bottom:1px solid #ccc;outline:none;font-size:11.5px;font-family:inherit;"> 부터 <input id="s7t" type="date" style="border:none;border-bottom:1px solid #ccc;outline:none;font-size:11.5px;font-family:inherit;"> (최대 7일)</div></div>'
       +mkSigRow('s7n','s7s','s7d','s7tt','','','',false)
-      +'<div class="stitle" style="margin-top:10px;">Section 8: 작업 철수 <span class="ed-badge">✏ 입력 가능</span></div>'
-      +'<div class="chklist">해당 작업이 완결되어, 이를 모든 작업자에게 설명하였으며, 작업 현장은 안전하게 정돈되었다.</div>'
+      +'<div class="stitle" style="margin-top:10px;">Section 8: 작업 철수 (작업 업체 관리 감독자 작성) <span class="ed-badge">✏ 입력 가능</span></div>'
+      +'<div class="chklist">해당 작업이 완결되어, 이를 모든 작업자에게 설명하였으며, 작업 현장은 안전하게 정돈되었다. 본 작업 허가서, 위험성 평가 및 관리 양식을 반드시 작업허가 승인 담당자에게 제출해야만 한다.</div>'
       +mkSigRow('s8n','s8s','s8d','s8t','','','',false)
-      +'<div class="stitle" style="margin-top:10px;">Section 9: 작업 종료 관련 <span class="ed-badge">✏ 입력 가능</span></div>'
-      +'<div class="chklist">본 작업 활동이 완결되어, 모든 작업자에게 설명하였으며, 작업 현장은 안전하게 정돈되었다.</div>'
+      +'<div class="stitle" style="margin-top:10px;">Section 9: 작업 종료 관련 (업무 담당자 작성) <span class="ed-badge">✏ 입력 가능</span></div>'
+      +'<div class="chklist">본 작업 활동이 완결되어, 모든 작업자에게 설명하였으며, 작업 현장은 안전하게 정돈되었다. 작업 수행에 참여한 작업 업체의 현장 감독자는 반드시 본 작업 허가서, 위험성 평가 및 작업허가 양식을 터미널 담당자에게 반납해야 한다.</div>'
       +mkSigRow('s9n','s9s','s9d','s9t','','','',false)
-      +'<div class="stitle" style="margin-top:10px;">Section 10: 작업 완료 허가 <span class="ed-badge">✏ 입력 가능</span></div>'
-      +'<div class="chklist">본 작업허가서와 연관된 모든 작업이 종결되었으며, 해당 문서들을 수령하였다.</div>'
+      +'<div class="stitle" style="margin-top:10px;">Section 10: 작업 완료 허가 (작업 허가 승인 담당자가 작성) <span class="ed-badge">✏ 입력 가능</span></div>'
+      +'<div class="chklist">본 작업허가서와 연관된 모든 작업이 종결되었으며, 해당 문서들을 수령하였다. 본인은 BNCT 작업허가대장에 해당 허가서를 마감 등록하였으며, 기록 보존(스캔, 파일 저장 등)을 위해 관련된 서류를 제출하였다.</div>'
       +mkSigRow('s10n','s10s','s10d','s10t','','','',false)
       +'<div class="page-ind">Page 2 of 2 · 작업허가서 양식</div></div>';
     return h;
@@ -309,73 +312,154 @@ function renderForm(){
 
   // ── 화기작업 양식 ────────────────────────────────────
   function buildHotwork(){
-    var gen=['소화기는 화기 작업 지점 10m 이내에 비치한다.','용접방화포나 불티 방지막을 바닥이나 철망판 위에 설치한다.','가연성 물질 또는 연료원은 작업장소로부터 격리시킬 것 (주변 15m 공간 고려)','배수관, 전선 및 가연성 물질은 방화 담요, 불티 방지막 등을 이용해 덮어둔다.','소방호스를 작업지점까지 끌어다두고 사용할 준비를 해둔다.','화재 감시자는 작업 중 및 작업 완료 후 작업 구역을 주시한다.'];
-    var spec=['설비에 인접하여 화기작업이 이루어지는 경우 격리 필요','작업 개시 전 화재방지 또는 화재탐지 시스템 격리 필요','작업 공간 세척, 불순물 제거, 환기 또는 작업전 가스 농도 측정 필요','작업 개시 전 작업장소 준비 또는 작업 중 대기 모니터링 필요','작업 특성상 방독마스크 착용 필요','작업 특성상 가스 호스 또는 기타 민감한 시설/장비의 보호 조치 필요','아크 용접시, 감전 가능성을 최소화하기 위해 조치가 필요한 경우'];
+    var gen=['소화기는 화기 작업 지점 10m 이내에 비치한다.','작은 불티, 슬래그를 차단하기 위해 용접방화포나 불티 방지막을 바닥이나 철망판 위에 설치한다.','가연성 물질 또는 연료원은 작업장소로부터 격리시킬 것 (작업장소 표면, 위, 아래 포함 주변 15m 정도의 공간을 고려할 것)','배수관, 전선 및 가연성 물질은 덮어둔다. (방화 담요, 불티 방지막 등을 이용한다.)','소방호스를 작업지점까지 끌어다두고 사용할 준비를 해둔다 (야외작업의 경우에 적합하며 전기 장비가 없는 곳)','화재 감시자는 작업 중 또는 작업 완료 후에 작업 구역을 주시한다.'];
+    var spec=['설비에 인접하여 화기작업이 이루어지는 경우 격리 필요 (파이프, 탱크, 압력 용기 등)','작업 개시 전 화재방지 또는 화재탐지 시스템 격리 필요','작업 공간 세척, 불순물 제거, 환기 또는 작업전 가스 농도 측정 필요','작업 개시 전 작업장소 준비 또는 작업 중 대기 모니터링 필요','작업 특성상 방독마스크 착용 필요','작업 특성상 가스 호스 또는 기타 민감한 시설/장비의 보호 조치 필요','아크 용접시, 작업 장소로 인한 감전 가능성을 최소화하기 위해 조치가 필요한 경우'];
+    var confined=['장비는 밀폐 공간 밖에 설치 (용접에 필요한 실린더, 호스 등. 단, 방독 마스크 제외)','환기장치를 사용할 경우, 환기장치의 후드를 오염원에 근접시킬 것','오염원을 밀폐공간에서 제거하여 오염원이 재순환하거나 다른 근로자들에게 해를 끼치지 못하게 할 것','아크 용접 작업이 장시간 중단될 경우, 전원을 끄고 호스 연결을 해체하고 가스 압력을 낮출 것','가스 용접/절단 작업이 장시간 중단될 경우, 토치와 실린더 밸브를 잠그고 토치와 호스 연결을 해체하고 가스 압력을 낮출 것'];
     return '<div class="card">'
       +'<div style="display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #003087;padding-bottom:6px;margin-bottom:10px;">'
       +'<div style="background:#003087;color:white;padding:2px 8px;font-size:10px;font-weight:700;border-radius:3px;">작업허가서</div>'
       +'<div style="font-size:18px;font-weight:900;color:#003087;">화기작업 양식</div></div>'
+      +'<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><div style="border:1px solid #999;display:flex;"><div style="background:#f0f0f0;padding:3px 8px;font-size:11px;font-weight:700;border-right:1px solid #999;">작업허가 번호</div><input style="padding:3px 8px;font-size:11px;border:none;outline:none;font-family:inherit;min-width:130px;" placeholder="번호 입력"></div></div>'
       +'<div class="stitle">Section 1 – 일반사항</div>'
-      +'<table class="pt"><tr><th>작업명</th><td>'+tinput('hw1',f['s1-work']||proj,true)+'</td></tr>'
-      +'<tr><th>작업 장소</th><td>'+tinput('hw2',f['s1-place']||'',true)+'</td></tr></table>'
+      +'<table class="pt"><tr><th>작업명<br><span style="font-weight:400;font-size:10px;">(작업 위험성 평가에 따름)</span></th><td>'+tinput('hw1',f['s1-work']||proj,true)+'</td></tr>'
+      +'<tr><th>작업 장소</th><td>'+tinput('hw2',f['s1-place']||'',true)+'</td></tr>'
+      +'<tr><th>접근 제한</th><td><input style="width:100%;border:none;outline:none;font-size:11.5px;font-family:inherit;"></td></tr>'
+      +'<tr><th>잠재적 발화원</th><td><div style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px;">'
+      +'<label style="display:flex;gap:4px;align-items:center;"><input type="checkbox"> 불꽃 (용접, 납땜 등)</label>'
+      +'<label style="display:flex;gap:4px;align-items:center;"><input type="checkbox"> 불티 또는 슬래그</label>'
+      +'<label style="display:flex;gap:4px;align-items:center;"><input type="checkbox"> 뜨거운 물체 (금속 표면, 철판 등)</label>'
+      +'<label style="display:flex;gap:4px;align-items:center;"><input type="checkbox"> 기타: <input type="text" style="border:none;border-bottom:1px solid #999;outline:none;width:100px;font-size:11px;font-family:inherit;"></label>'
+      +'</div></td></tr></table>'
       +'<div class="stitle" style="margin-top:10px;">Section 2 – 일반 화기작업 / 발화요인 통제</div>'
-      +'<table class="pt"><thead><tr><th>조치 내용</th><th style="width:40px;text-align:center;">예</th><th style="width:50px;text-align:center;">아니오</th></tr></thead><tbody>'
-      +gen.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td></tr>';}).join('')
+      +'<table class="pt"><thead><tr><th>조치 내용</th><th style="width:40px;text-align:center;">예</th><th style="width:40px;text-align:center;">아니오</th><th>조치</th></tr></thead><tbody>'
+      +gen.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td><td><input style="width:100%;border:none;outline:none;font-size:10.5px;font-family:inherit;"></td></tr>';}).join('')
       +'</tbody></table>'
       +'<div class="stitle" style="margin-top:10px;">Section 3 – 특정 화기작업 / 발화요인 통제</div>'
-      +'<table class="pt"><thead><tr><th>필요한 조치</th><th style="width:40px;text-align:center;">예</th><th style="width:50px;text-align:center;">아니오</th></tr></thead><tbody>'
-      +spec.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td></tr>';}).join('')
+      +'<table class="pt"><thead><tr><th>필요한 조치</th><th style="width:40px;text-align:center;">예</th><th style="width:40px;text-align:center;">아니오</th><th>설명</th></tr></thead><tbody>'
+      +spec.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td><td><input style="width:100%;border:none;outline:none;font-size:10.5px;font-family:inherit;"></td></tr>';}).join('')
+      +'</tbody></table>'
+      +'<div class="stitle" style="margin-top:10px;">Section 4 – 추가 조치 (밀폐 공간의 경우) <label style="font-weight:400;font-size:11px;margin-left:10px;"><input type="checkbox"> 아니오 (해당사항 없을경우)</label></div>'
+      +'<table class="pt"><thead><tr><th>필요한 조치</th><th style="width:40px;text-align:center;">예</th><th style="width:40px;text-align:center;">아니오</th></tr></thead><tbody>'
+      +confined.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td></tr>';}).join('')
       +'</tbody></table>'
       +'<div class="page-ind">Page 1 of 1 · 화기작업 양식</div></div>';
   }
 
   // ── 고소작업 양식 ────────────────────────────────────
   function buildHeight(){
+    var aerial=['작업자의 머리 위쪽에 위치한 전선, 구조물, 움직이는 장비 등의 위험요소로부터 최소 안전거리를 유지해야 한다','고소작업차를 평평한 곳에 설치하기 위해 특정 조치가 필요하다','(사람이나 장비 접근을 방지하기 위해) 고소작업차 주위에 바리케이트 또는 표지판을 설치해야한다.','붐 길이가 11m 이상이어서 면허증을 가진 고소작업차 기사가 필요하다.','고소작업차를 사용하는 작업자는 고소작업차 설치, 통제 및 비상 탈출에 대해 숙지하고 있다.','기타:'];
+    var scaffold=['비계는 자격증이 있는 작업자가 설치하고 해체한다 (작업발판 높이 4m 이상인 경우 의무사항)','비계 설치 계획을 작성한다.','비계 설치 및 해체 시 낙하 사고 예방을 위해 주변에 바리케이트를 설치한다.','비계 절차는 안전한 비계 접근 상황을 확인하기 위해 사용된다.'];
+    var fallprev=['접근 통제를 위한 임시 네트 설치','고소작업을 위한 자동죔줄(안전블록)','낙하물 방지망','머리 보호대','경고 사인/바리케이트 필요','특정 조명 필요'];
     return '<div class="card">'
       +'<div style="display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #003087;padding-bottom:6px;margin-bottom:10px;">'
       +'<div style="background:#003087;color:white;padding:2px 8px;font-size:10px;font-weight:700;border-radius:3px;">작업허가서</div>'
       +'<div style="font-size:18px;font-weight:900;color:#003087;">고소작업 양식</div></div>'
+      +'<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><div style="border:1px solid #999;display:flex;"><div style="background:#f0f0f0;padding:3px 8px;font-size:11px;font-weight:700;border-right:1px solid #999;">작업허가 번호</div><input style="padding:3px 8px;font-size:11px;border:none;outline:none;font-family:inherit;min-width:130px;" placeholder="번호 입력"></div></div>'
       +'<div class="stitle">Section 1 – 고소작업 / 접근 방법</div>'
-      +'<table class="pt"><tr><th>작업명</th><td>'+tinput('ht1',f['s1-work']||proj,true)+'</td></tr>'
-      +'<tr><th>작업 장소</th><td>'+tinput('ht2',f['s1-place']||'',true)+'</td></tr>'
-      +'<tr><th>접근 방법</th><td><input style="width:100%;border:none;outline:none;font-size:11.5px;font-family:inherit;"></td></tr></table>'
-      +'<div class="stitle" style="margin-top:10px;">Section 2 – 고소작업차 관련 요구사항</div>'
-      +'<table class="pt"><thead><tr><th>조치</th><th style="width:40px;text-align:center;">예</th><th style="width:50px;text-align:center;">아니오</th></tr></thead><tbody>'
-      +['작업자의 머리 위쪽 전선, 구조물 등의 위험요소로부터 최소 안전거리를 유지해야 한다','고소작업차를 평평한 곳에 설치하기 위해 특정 조치가 필요하다','고소작업차 주위에 바리케이트 또는 표지판을 설치해야한다.','붐 길이가 11m 이상이어서 면허증을 가진 고소작업차 기사가 필요하다.','고소작업차를 사용하는 작업자는 설치, 통제 및 비상 탈출에 대해 숙지하고 있다.'].map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td></tr>';}).join('')
+      +'<table class="pt"><tr><th>작업명<br><span style="font-weight:400;font-size:10px;">(작업 위험성 평가에 따름)</span></th><td>'+tinput('ht1',f['s1-work']||proj,true)+'</td></tr>'
+      +'<tr><th>작업 유형<br><span style="font-weight:400;font-size:10px;">(접근 사유)</span></th><td><input style="width:100%;border:none;outline:none;font-size:11.5px;font-family:inherit;"></td></tr>'
+      +'<tr><th>작업 장소/위치</th><td>'+tinput('ht2',f['s1-place']||'',true)+'</td></tr>'
+      +'<tr><th>접근 방법/고소 작업</th><td><input style="width:100%;border:none;outline:none;font-size:11.5px;font-family:inherit;"></td></tr></table>'
+      +'<div class="stitle" style="margin-top:10px;">Section 2 – 고소작업 및 접근 허가 관련 요구사항</div>'
+      +'<div style="font-size:11px;padding:4px 8px;"><strong>고소작업차 관련 요구사항</strong> <label style="margin-left:10px;"><input type="checkbox"> 아니오 (해당사항 없음)</label></div>'
+      +'<table class="pt"><thead><tr><th>고소작업차 관련 조치</th><th style="width:40px;text-align:center;">예</th><th style="width:40px;text-align:center;">아니오</th><th>상세 조치 내용</th></tr></thead><tbody>'
+      +aerial.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td><td><input style="width:100%;border:none;outline:none;font-size:10.5px;font-family:inherit;"></td></tr>';}).join('')
       +'</tbody></table>'
-      +'<div class="page-ind">Page 1 of 1 · 고소작업 양식</div></div>';
+      +'<div style="font-size:11px;padding:4px 8px;margin-top:8px;"><strong>비계 관련 요구사항</strong> <label style="margin-left:10px;"><input type="checkbox"> 아니오 (해당사항 없음)</label></div>'
+      +'<div style="border:1px solid #ccc;padding:8px;font-size:11px;margin-bottom:4px;"><strong>비계 종류:</strong>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">'
+      +['시스템 비계 (설계가 규격화되어 있으며 일반적인 구조)','이동식 비계 (이동가능한 비계)','강관 비계(강관의 길이 및 클램프 종류, 비계 구조 다양함)','복잡한 구조의 비계 (캔틸레버, 걸침비계 등)'].map(function(t){return '<label style="display:flex;gap:4px;align-items:center;"><input type="checkbox"> '+t+'</label>';}).join('')
+      +'</div></div>'
+      +'<table class="pt"><thead><tr><th>비계 관련 조치</th><th style="width:40px;text-align:center;">예</th><th style="width:40px;text-align:center;">아니오</th></tr></thead><tbody>'
+      +scaffold.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td></tr>';}).join('')
+      +'</tbody></table>'
+      +'<div class="stitle" style="margin-top:10px;">낙하물 및 기타 예방조치</div>'
+      +'<table class="pt"><thead><tr><th>기타 필요 물품</th><th style="width:40px;text-align:center;">예</th><th style="width:40px;text-align:center;">아니오</th><th>상세 조치 내용</th></tr></thead><tbody>'
+      +fallprev.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td><td><input style="width:100%;border:none;outline:none;font-size:10.5px;font-family:inherit;"></td></tr>';}).join('')
+      +'</tbody></table>'
+      +'<div class="page-ind">Page 1 of 2 · 고소작업 양식</div></div>';
   }
 
   // ── 전기 유지보수 양식 ───────────────────────────────
   function buildElectric(){
+    var checks=['반드시 최신 설계도를 참고 해야함 (작업 개시 전)','자격증이 있는 전기 기술자만 작업 수행','설비/장비 책임자에게 반드시 알려야 함 (관련 매니저, 수석 엔지니어 등)','격리 지점에 필요한 표지 부착 (비상시 구조 목적)','구조 키트는 점검 후 가까운 위치에 배치(격리 지점 또는 작업 구역 인근)','점검 완료한 절연 테스트 도구 및 장비만 사용','모든 작업자가 금속 물질 제거해야만 함 (귀금속, 벨트 버클, 시계, 펜 등)','안전보호구 필수 착용 구역에 들어갈 경우 작업자 및 안전 관리자는 반드시 방염복을 입어야 함','전기 절연 장갑의 손상 유무 및 시험 전압 확인 (전류가 흐르는 고압에도 절연되는 장갑)','개인 안전 장구 필수 착용 구역에 머물 경우 자외선 차단 기능이 있는 안면보호대를 반드시 사용','작업 구역 접근 방지를 위해 바리케이드 반드시 설치'];
+    var extra=[
+      ['전도성이 있는 표면 또는 전기가 흐르는 부분에 인접한 경우: 절연 고무 매트 설치 및 절연 바리케이드 설치'],
+      ['좁은 공간에서의 작업: 적절한 자세 유지, 절연 바리케이드 설치'],
+      ['대체 전기 공급원이 있는 경우: 격리 및 격리 지점 표지판 부착'],
+      ['콘덴서 전류 방출이 필요한 경우: 적절한 방출 장비 사용']
+    ];
     return '<div class="card">'
       +'<div style="display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #003087;padding-bottom:6px;margin-bottom:10px;">'
       +'<div style="background:#003087;color:white;padding:2px 8px;font-size:10px;font-weight:700;border-radius:3px;">작업허가서</div>'
-      +'<div style="font-size:18px;font-weight:900;color:#003087;">전기 유지보수 작업 양식</div></div>'
+      +'<div style="font-size:18px;font-weight:900;color:#003087;">전기 유지보수 작업 양식(전원이 켜진 장비)</div></div>'
+      +'<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><div style="border:1px solid #999;display:flex;"><div style="background:#f0f0f0;padding:3px 8px;font-size:11px;font-weight:700;border-right:1px solid #999;">작업허가 번호</div><input style="padding:3px 8px;font-size:11px;border:none;outline:none;font-family:inherit;min-width:130px;" placeholder="번호 입력"></div></div>'
       +'<div class="stitle">Section 1 – 일반 사항</div>'
-      +'<table class="pt"><tr><th>작업명</th><td>'+tinput('el1',f['s1-work']||proj,true)+'</td></tr>'
-      +'<tr><th>위치</th><td>'+tinput('el2',f['s1-place']||'',true)+'</td></tr></table>'
-      +'<div class="stitle" style="margin-top:10px;">Section 2 – 반드시 필요한 조치에 대한 확인</div>'
-      +'<table class="pt"><thead><tr><th>조치 내용</th><th style="width:40px;text-align:center;">예</th><th style="width:50px;text-align:center;">아니오</th></tr></thead><tbody>'
-      +['반드시 최신 설계도를 참고 해야함 (작업 개시 전)','자격증이 있는 전기 기술자만 작업 수행','설비/장비 책임자에게 반드시 알려야 함','격리 지점에 필요한 표지 부착','구조 키트는 점검 후 가까운 위치에 배치','점검 완료한 절연 테스트 도구 및 장비만 사용','모든 작업자가 금속 물질 제거해야만 함','안전보호구 필수 착용 구역 진입 시 방염복 착용','전기 절연 장갑의 손상 유무 및 시험 전압 확인','자외선 차단 기능이 있는 안면보호대 반드시 사용','작업 구역 접근 방지를 위해 바리케이드 반드시 설치'].map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td></tr>';}).join('')
+      +'<table class="pt"><tr><th>작업명<br><span style="font-weight:400;font-size:10px;">(작업 위험성 평가에 따름)</span></th><td>'+tinput('el1',f['s1-work']||proj,true)+'</td></tr></table>'
+      +'<div class="stitle" style="margin-top:10px;">Section 2 – 전원이 켜진 장비의 유지 보수 관련 조치</div>'
+      +'<table class="pt"><tr><th>위치</th><td>'+tinput('el2',f['s1-place']||'',true)+'</td></tr>'
+      +'<tr><th>유지 보수 작업</th><td style="font-size:10.5px;line-height:1.6;">일부 또는 전체 장비의 전원이 켜진 상태에서 정비, 보수, 변경, 전기 장비 제거 또는 교체의 경우.</td></tr></table>'
+      +'<div style="border:1px solid #ccc;padding:6px 8px;font-size:11px;margin-top:4px;"><strong>반드시 필요한 조치에 대한 확인(계획/완료)</strong></div>'
+      +'<div style="padding:6px 12px;border:1px solid #ccc;border-top:none;font-size:11px;">'
+      +checks.map(function(c){return '<label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;"><input type="checkbox" style="margin-top:2px;flex-shrink:0;"> <span>'+c+'</span></label>';}).join('')
+      +'<div style="font-size:11px;font-weight:700;margin-top:6px;">승인된 안전 관리자:</div>'
+      +'<div style="font-size:10.5px;line-height:1.8;padding-left:12px;">'
+      +'• 전기가 차단되지 않은 상태에서 작업을 하는 경우 입회해야 함<br>'
+      +'• 작업의 성격, 위험요인, 작업 격리 지점에 관해 설명해야 함<br>'
+      +'• 작업이 진행되는 동안 상시 대기해야 함<br>'
+      +'• 위험 요소 발견 시 경고하며 비상시 도움을 주고 작업 구역 접근 통제 등의 역할을 반드시 이해해야 함'
+      +'</div></div>'
+      +'<div class="stitle" style="margin-top:10px;">추가 조치 (작업의 성격에 따름)</div>'
+      +'<table class="pt"><thead><tr><th>조치 내용</th><th style="width:40px;text-align:center;">예</th><th style="width:40px;text-align:center;">아니오</th><th>세부 조치</th></tr></thead><tbody>'
+      +extra.map(function(item){return '<tr><td style="font-size:10.5px;">'+item[0]+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td><td><input style="width:100%;border:none;outline:none;font-size:10.5px;font-family:inherit;"></td></tr>';}).join('')
       +'</tbody></table>'
+      +'<div class="stitle" style="margin-top:10px;">전기 계획 확인</div>'
+      +'<div style="border:1px solid #ccc;padding:6px 8px;font-size:10.5px;line-height:1.6;">전기 담당 책임자가 전류가 흐르는 전기 장비의 정비 작업에 대한 심도 깊은 검토를 이행하였음을 확인하기 위한 것임.</div>'
+      +mkSigRow('eln','els','eld','elt','','','',false)
       +'<div class="page-ind">Page 1 of 1 · 전기 유지보수 작업 양식</div></div>';
   }
 
   // ── 기계적 인양 양식 ─────────────────────────────────
   function buildLifting(){
+    var gen1=['위험성 평가를 수행하였는가?','화물이 전원이 켜져있는 설비나 전선, 가스 배관위로 인양되고 있는가?','작업자는 장비에 익숙한가?','작업자는 작업 수행 경험이 풍부한가?','작업이 여러 개의 순차적 단계로 되어 있는가?','인양될 화물이 20톤을 초과하는가?','크레인기사에게 알려야 할 사항이 있는가?','화물의 권상지점과 인양 방법을 파악하였는가?','인양 작업 지역의 전선에 대하여 확인하고 격리를 실시하였는가?','진입경로를 확보하고 장애물이 없는지 확인하였는가?','화물이 잘 묶여 있는지 확인하였는가?','악천후가 예상되는가?'];
     return '<div class="card">'
       +'<div style="display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #003087;padding-bottom:6px;margin-bottom:10px;">'
       +'<div style="background:#003087;color:white;padding:2px 8px;font-size:10px;font-weight:700;border-radius:3px;">작업허가서</div>'
       +'<div style="font-size:18px;font-weight:900;color:#003087;">기계적 인양 작업 양식</div></div>'
+      +'<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><div style="border:1px solid #999;display:flex;"><div style="background:#f0f0f0;padding:3px 8px;font-size:11px;font-weight:700;border-right:1px solid #999;">작업허가 번호</div><input style="padding:3px 8px;font-size:11px;border:none;outline:none;font-family:inherit;min-width:130px;" placeholder="번호 입력"></div></div>'
+      +'<div style="border:1px solid #e88;background:#fff5f5;padding:6px 10px;font-size:10.5px;margin-bottom:8px;line-height:1.6;">20톤 이상 인양작업 또는 두 개 이상의 크레인 사용시 반드시 허가를 받아야 한다. 작업 전에 반드시 <strong>위험성평가/또는 작업안전분석</strong>을 수행하여야 한다.</div>'
+      +'<div style="display:flex;gap:20px;font-size:11px;margin-bottom:8px;padding:6px 8px;border:1px solid #ccc;">'
+      +'<label><input type="checkbox"> 인양 작업 수행자는 면허증을 소지하고 있으며 훈련을 받아 필요한 역량을 갖추고 있는가? &nbsp;<strong>예 / 아니오</strong></label>'
+      +'</div>'
+      +'<div style="display:flex;gap:20px;font-size:11px;margin-bottom:8px;padding:6px 8px;border:1px solid #ccc;">'
+      +'<label><input type="checkbox"> 해당 작업에 대한 허가서를 발급받았는가? &nbsp;<strong>예 / 아니오</strong></label>'
+      +'</div>'
       +'<div class="stitle">SECTION 1 – 일반사항</div>'
       +'<table class="pt"><tr><th>작업명</th><td>'+tinput('lf1',f['s1-work']||proj,true)+'</td></tr>'
-      +'<tr><th>작업 장소</th><td>'+tinput('lf2',f['s1-place']||'',true)+'</td></tr></table>'
-      +'<div class="stitle" style="margin-top:10px;">SECTION 2 – 체크리스트</div>'
-      +'<table class="pt"><thead><tr><th>항목</th><th style="width:40px;text-align:center;">예</th><th style="width:50px;text-align:center;">아니오</th></tr></thead><tbody>'
-      +['위험성 평가를 수행하였는가?','화물이 전원이 켜져있는 설비나 전선 위로 인양되고 있는가?','작업자는 장비에 익숙한가?','인양될 화물이 20톤을 초과하는가?','크레인 기사에게 알려야 할 사항이 있는가?','화물의 권상지점과 인양 방법을 파악하였는가?','인양 작업 지역의 전선에 대하여 확인하고 격리를 실시하였는가?','진입경로를 확보하고 장애물이 없는지 확인하였는가?','화물이 잘 묶여 있는지 확인하였는가?','악천후가 예상되는가?'].map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td></tr>';}).join('')
+      +'<tr><th>작업 장소</th><td>'+tinput('lf2',f['s1-place']||'',true)+'</td></tr>'
+      +'<tr><th>작업 목적/유형</th><td><input style="width:100%;border:none;outline:none;font-size:11.5px;font-family:inherit;"></td></tr>'
+      +'<tr><th>크레인 규격</th><td style="font-size:11px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">규격: <input type="text" style="width:60px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:11px;"> 등록번호: <input type="text" style="width:80px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:11px;"> 권상하중: <input type="text" style="width:60px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:11px;"> 작업반경: <input type="text" style="width:60px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:11px;"></td></tr>'
+      +'<tr><th>작업 기간</th><td style="font-size:11px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">시작: <input type="date" style="width:130px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:11px;"> <input type="time" style="width:90px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:11px;"> 종료: <input type="date" style="width:130px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:11px;"> <input type="time" style="width:90px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:11px;"></td></tr></table>'
+      +'<div class="stitle" style="margin-top:8px;">SECTION 2 – 관리 방안</div>'
+      +'<div style="border:1px solid #ccc;padding:8px;font-size:11px;display:flex;flex-direction:column;gap:6px;">'
+      +[['작업장에 위험요소가 없는가?','haz'],['추가 격리가 필요한가?','iso'],['비상 대응 방안이 필요한가?','emer']].map(function(q){return '<div style="display:flex;justify-content:space-between;align-items:center;"><span>'+q[0]+'</span><span style="display:flex;gap:12px;"><label><input type="radio" name="'+q[1]+'-lf"> 예</label><label><input type="radio" name="'+q[1]+'-lf"> 아니오</label></span></div>';}).join('')
+      +'</div>'
+      +'<div class="stitle" style="margin-top:8px;">SECTION 3 – 작업 허가</div>'
+      +'<div style="border:1px solid #ccc;padding:6px 8px;font-size:10.5px;line-height:1.6;">본 허가서를 인정하며 상기 명시된 조건 및 관련 절차를 준수할 것에 동의하고, 작업의 직접적인 담당자로서 책임을 수락한다.</div>'
+      +mkSigRow('lf3n','lf3s','lf3d','lf3t','','','',false)
+      +'<div class="stitle" style="margin-top:8px;">SECTION 4 – 작업의 완료, 중단 또는 취소</div>'
+      +'<div style="border:1px solid #ccc;padding:8px;font-size:11px;display:flex;flex-direction:column;gap:6px;">'
+      +'<div style="display:flex;justify-content:space-between;"><span>인양허가와 관련된 모든 작업의 상태:</span><span style="display:flex;gap:12px;"><label><input type="radio" name="lf-stat"> 완료</label><label><input type="radio" name="lf-stat"> 중단</label></span></div>'
+      +'<div style="display:flex;justify-content:space-between;"><span>작업 완료 후 작업장과 그 인접한 구역을 점검하였으며 모든 위험요소에 대해 조치하였는가?</span><span style="display:flex;gap:12px;"><label><input type="radio" name="lf-chk"> 예</label><label><input type="radio" name="lf-chk"> 아니오</label></span></div>'
+      +'<div style="display:flex;justify-content:space-between;"><span>장비 점검 후 반납하였는가?</span><span style="display:flex;gap:12px;"><label><input type="radio" name="lf-eqp"> 예</label><label><input type="radio" name="lf-eqp"> 아니오</label></span></div>'
+      +'<div>비고: <input style="width:90%;border:none;border-bottom:1px solid #ccc;outline:none;font-size:11px;font-family:inherit;"></div>'
+      +'</div>'
+      +mkSigRow('lf4n','lf4s','lf4d','lf4t','','','',false)
+      +'<div class="stitle" style="margin-top:8px;">SECTION 5 – 체크리스트</div>'
+      +'<table class="pt"><thead><tr><th>항목</th><th style="width:40px;text-align:center;">예</th><th style="width:40px;text-align:center;">아니오</th></tr></thead><tbody>'
+      +gen1.map(function(item){return '<tr><td style="font-size:10.5px;">'+item+'</td><td style="text-align:center;"><input type="checkbox"></td><td style="text-align:center;"><input type="checkbox"></td></tr>';}).join('')
       +'</tbody></table>'
-      +'<div class="page-ind">Page 1 of 1 · 기계적 인양 작업 양식</div></div>';
+      +'<div class="page-ind">Page 1 of 3 · 기계적 인양 작업 양식</div></div>';
   }
 
   // ── forms 배열 기반으로 서류 렌더링 ─────────────────
