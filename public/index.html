@@ -857,7 +857,35 @@ async function doSubmit(recipients) {
   showLoadingOverlay(true,'PDF 생성 중...');
   document.getElementById('btnPdf').disabled=true;
   try {
-    // ① PDF 생성
+    // ① 입력값 먼저 수집 (PDF 생성 전에!)
+    function gv(id){ var e=document.getElementById(id); return e?e.value:''; }
+    function getSigData(canvasEl){
+      if(!canvasEl) return null;
+      var d=canvasEl.getContext('2d').getImageData(0,0,canvasEl.width,canvasEl.height).data;
+      for(var i=0;i<d.length;i+=4){if(d[i]<200||d[i+1]<200||d[i+2]<200)return canvasEl.toDataURL('image/jpeg',0.85);}
+      return null;
+    }
+    var s2sigCanvas = (function(){
+      var nameEl = document.getElementById('s2-name');
+      if(!nameEl) return null;
+      var sigRow = nameEl.closest('.sig-inline');
+      if(!sigRow) return null;
+      return sigRow.querySelector('.sig-canvas');
+    })();
+    var collectedFormData = {
+      's1-work':    gv('s1-work'),
+      's1-place':   gv('s1-place'),
+      's1-company': gv('s1-company'),
+      's1-from':    gv('s1-from'),
+      's1-to':      gv('s1-to'),
+      's2-name':    gv('s2-name'),
+      's2-date':    gv('s2-date'),
+      's2-time':    gv('s2-time'),
+      'sig2_img':   getSigData(s2sigCanvas),
+      'section3Name': recipients.map(function(r){return r.name;}).join(', ')
+    };
+
+    // ② PDF 생성
     var jsPDF=window.jspdf.jsPDF;
     var pdf=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
     var sections=Array.from(document.querySelectorAll('#formsContainer .doc-section'));
@@ -958,30 +986,6 @@ async function doSubmit(recipients) {
     var signingUrl = null;
     try {
       showLoadingOverlay(true, '서명 링크 생성 중...');
-
-      // 실제 입력값 수집
-      function gv(id){ var e=document.getElementById(id); return e?e.value:''; }
-      function getSigData(canvasEl){
-        if(!canvasEl) return null;
-        var d=canvasEl.getContext('2d').getImageData(0,0,canvasEl.width,canvasEl.height).data;
-        for(var i=0;i<d.length;i+=4){if(d[i]<200||d[i+1]<200||d[i+2]<200)return canvasEl.toDataURL('image/jpeg',0.85);}
-        return null;
-      }
-      var s2canvas = document.querySelector('#page-permit-main #s2-name')
-        ? document.querySelector('#page-permit-main .sig-area .sig-canvas') : null;
-      var collectedFormData = {
-        's1-work':    gv('s1-work'),
-        's1-place':   gv('s1-place'),
-        's1-company': gv('s1-company'),
-        's1-from':    gv('s1-from'),
-        's1-to':      gv('s1-to'),
-        's2-name':    gv('s2-name'),
-        's2-date':    gv('s2-date'),
-        's2-time':    gv('s2-time'),
-        'sig2_img':   getSigData(s2canvas),
-        'section3Name': recipients.map(function(r){return r.name;}).join(', ')
-      };
-
       var linkRes = await fetch('/api/create-permit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1010,10 +1014,7 @@ async function doSubmit(recipients) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         recipients: recipients,
-        ccRecipients: [
-          { name: '박형진', email: 'hj.park@bnctkorea.com' },
-          { name: '이병문', email: 'bm.lee@bnctkorea.com' }
-        ],
+        ccRecipients: [], // 테스트 중: CC 비활성화
         fileName: fileName,
         projectName: project,
         companyName: company,
