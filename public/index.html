@@ -910,17 +910,21 @@ async function doSubmit(recipients) {
     for(var pi=0;pi<allPages.length;pi++) {
       showLoadingOverlay(true,'PDF 변환 중... ('+(pi+1)+'/'+allPages.length+'페이지)');
 
-      /* 해당 페이지가 속한 섹션만 보이게 */
       var targetPage = allPages[pi];
       var parentSection = targetPage.closest('.doc-section');
       sections.forEach(function(s){ s.style.display = (s === parentSection) ? 'block' : 'none'; });
-      await new Promise(function(r){ setTimeout(r,80); }); /* 렌더링 대기 */
+
+      /* 캡처 전: 페이지를 정확히 794px로 강제 설정 */
+      var origStyle = targetPage.getAttribute('style') || '';
+      targetPage.style.cssText = 'width:794px !important; max-width:794px !important; padding:40px !important; box-sizing:border-box !important; position:relative !important; background:white !important;';
+
+      await new Promise(function(r){ setTimeout(r,100); });
 
       var canvas=await html2canvas(targetPage,{
         scale:2, useCORS:true, allowTaint:true, logging:false,
         backgroundColor:'#ffffff',
-        windowWidth: targetPage.scrollWidth + 40,
-        width: targetPage.scrollWidth,
+        width:794,
+        windowWidth:794,
         ignoreElements:function(el){
           return el.classList&&(
             el.classList.contains('app-header')||
@@ -933,62 +937,75 @@ async function doSubmit(recipients) {
           );
         },
         onclone:function(doc){
-          /* input → span 교체 (값 있는 것만) */
+          /* 캡처용 페이지 너비 고정 */
+          var pg=doc.querySelector('#'+targetPage.id);
+          if(pg) pg.style.cssText='width:794px !important;max-width:794px !important;padding:40px !important;box-sizing:border-box !important;background:white !important;';
+
+          /* input → span 교체 */
           doc.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"]').forEach(function(inp){
             var s=doc.createElement('span');
             if(inp.value){
               s.textContent=inp.value;
-              s.style.cssText='font-size:12px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;overflow:visible;white-space:normal;word-break:break-all;line-height:1.5;padding:1px 0;';
+              s.style.cssText='font-size:12px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;overflow:visible;white-space:normal;word-break:break-word;line-height:1.5;';
             } else {
-              s.style.cssText='display:inline-block;width:100%;min-height:1em;';
+              s.style.cssText='display:inline-block;min-width:20px;';
             }
             inp.parentNode.replaceChild(s,inp);
           });
           doc.querySelectorAll('textarea').forEach(function(ta){
             var s=doc.createElement('span');
             s.textContent=ta.value||'';
-            s.style.cssText='font-size:12px;font-family:Noto Sans KR,sans-serif;display:block;width:100%;overflow:visible;white-space:pre-wrap;word-break:break-all;line-height:1.5;';
+            s.style.cssText='font-size:12px;font-family:Noto Sans KR,sans-serif;display:block;width:100%;overflow:visible;white-space:pre-wrap;word-break:break-word;line-height:1.5;';
             ta.parentNode.replaceChild(s,ta);
           });
           doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
             var s=doc.createElement('span');
             s.textContent=cb.checked?'☑':'☐';
-            s.style.cssText='font-size:13px;display:inline-block;line-height:1;';
+            s.style.cssText='font-size:13px;display:inline-block;line-height:1;flex-shrink:0;';
             cb.parentNode.replaceChild(s,cb);
           });
           doc.querySelectorAll('input[type="radio"]').forEach(function(rb){
             var s=doc.createElement('span');
             s.textContent=rb.checked?'●':'○';
-            s.style.cssText='font-size:12px;display:inline-block;';
+            s.style.cssText='font-size:12px;display:inline-block;flex-shrink:0;';
             rb.parentNode.replaceChild(s,rb);
           });
-          /* 모든 컨테이너 overflow 해제 */
-          doc.querySelectorAll('*').forEach(function(el){
+          /* overflow 해제 */
+          doc.querySelectorAll('td,th').forEach(function(el){
             el.style.overflow='visible';
-            el.style.textOverflow='clip';
-            if(el.tagName==='TD'||el.tagName==='TH'){
-              el.style.whiteSpace='normal';
-              el.style.wordBreak='break-word';
-            }
+            el.style.whiteSpace='normal';
+            el.style.wordBreak='break-word';
           });
-          doc.querySelectorAll('table').forEach(function(t){ t.style.tableLayout='auto'; t.style.width='100%'; });
+          doc.querySelectorAll('div,p,span,label').forEach(function(el){
+            el.style.overflow='visible';
+          });
+          doc.querySelectorAll('table').forEach(function(t){
+            t.style.tableLayout='auto';
+            t.style.width='100%';
+          });
           doc.querySelectorAll('.app-header,.sidebar,.sig-clear-btn,.sig-expand-modal,.modal-overlay,.loading-overlay,.toast-container').forEach(function(el){ el.remove(); });
-          doc.querySelectorAll('.sig-area').forEach(function(a){ a.style.background='#ffffff'; a.style.border='1px solid #ccc'; a.style.overflow='visible'; });
+          doc.querySelectorAll('.sig-area').forEach(function(a){
+            a.style.background='#ffffff';
+            a.style.border='1px solid #ccc';
+            a.style.overflow='visible';
+          });
           doc.querySelectorAll('.sig-canvas').forEach(function(c){ c.style.background='#ffffff'; });
         }
       });
-      /* A4 210×297mm에 꽉 차게, 내용 작으면 여백 */
-      var imgData=canvas.toDataURL('image/jpeg',0.92);
+
+      /* 캡처 후 원래 스타일 복원 */
+      targetPage.setAttribute('style', origStyle);
+
+      /* A4에 맞게 이미지 배치 */
+      var imgData=canvas.toDataURL('image/jpeg',0.93);
       var pdfW=210;
-      var pdfH=(canvas.height*pdfW)/canvas.width;
+      var pdfH=(canvas.height/canvas.width)*pdfW;
       if(pi>0) pdf.addPage();
       if(pdfH<=297){
-        /* 내용이 A4보다 작으면 → A4 한 장에 위에서부터 넣고 나머지 여백 */
         pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
       } else {
-        /* 내용이 A4보다 길면 → 비율 유지하며 축소 */
-        var scale=297/pdfH;
-        pdf.addImage(imgData,'JPEG',0,0,pdfW*scale,297);
+        var sc=297/pdfH;
+        pdf.addImage(imgData,'JPEG',0,0,pdfW*sc,297);
       }
     }
 
@@ -1040,22 +1057,32 @@ async function doSubmit(recipients) {
     var signingUrl = null;
     try {
       showLoadingOverlay(true, '서명 링크 생성 중...');
+      var payload = {
+        projectName: project,
+        companyName: company,
+        workerCount: workerCount,
+        submitDate: dateStr,
+        managers: recipients,
+        forms: collectedForms,
+        formData: collectedFormData
+      };
+      console.log('[BNCT] create-permit payload:', JSON.stringify({
+        projectName: payload.projectName,
+        formsCount: payload.forms.length,
+        forms: payload.forms,
+        formDataKeys: Object.keys(payload.formData)
+      }));
       var linkRes = await fetch('/api/create-permit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectName: project,
-          companyName: company,
-          workerCount: workerCount,
-          submitDate: dateStr,
-          managers: recipients,
-          forms: collectedForms,
-          formData: collectedFormData
-        })
+        body: JSON.stringify(payload)
       });
-      if(linkRes.ok) {
-        var linkData = await linkRes.json();
+      var linkData = await linkRes.json();
+      console.log('[BNCT] create-permit response:', linkData);
+      if(linkRes.ok && linkData.signingUrl) {
         signingUrl = linkData.signingUrl;
+      } else {
+        console.warn('[BNCT] create-permit 실패:', linkData);
       }
     } catch(linkErr) {
       console.warn('링크 생성 실패 (이메일은 계속 발송):', linkErr);
