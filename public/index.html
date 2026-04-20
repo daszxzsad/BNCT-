@@ -928,7 +928,12 @@ async function doSubmit(recipients) {
             if(inp.value){
               var s=doc.createElement('span');
               s.textContent=inp.value;
-              s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;overflow:visible;white-space:normal;word-break:break-all;line-height:1.4;padding:1px 0;';
+              s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:inline;overflow:visible;white-space:nowrap;word-break:keep-all;line-height:1.4;padding:0 1px;';
+              inp.parentNode.replaceChild(s,inp);
+            } else {
+              // 값 없는 input도 빈 span으로 교체 (레이아웃 유지)
+              var s=doc.createElement('span');
+              s.style.cssText='display:inline-block;min-width:'+inp.style.width+';';
               inp.parentNode.replaceChild(s,inp);
             }
           });
@@ -982,6 +987,33 @@ async function doSubmit(recipients) {
     // ② PDF → 브라우저 직접 저장
     pdf.save(fileName);
 
+    // ② PDF → Supabase Storage 업로드 (이메일용 링크)
+    var pdfDownloadUrl = null;
+    try {
+      showLoadingOverlay(true, 'PDF 클라우드 저장 중...');
+      var SUPA_URL = 'https://ybgoglomjcurucnzsqce.supabase.co';
+      var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InliZ29nbG9tamN1cnVjbnpzcWNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NDM1NzQsImV4cCI6MjA5MTExOTU3NH0.P3fPsfLuGX44eZeFpMRM3bsMnL1KMaXMZiKbx_rAW8U';
+      // PDF blob 생성
+      var pdfBlob = pdf.output('blob');
+      var uploadPath = 'pdfs/' + fileName;
+      var uploadRes = await fetch(SUPA_URL + '/storage/v1/object/permits/' + uploadPath, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + SUPA_KEY,
+          'Content-Type': 'application/pdf',
+          'x-upsert': 'true'
+        },
+        body: pdfBlob
+      });
+      if(uploadRes.ok) {
+        pdfDownloadUrl = SUPA_URL + '/storage/v1/object/public/permits/' + uploadPath;
+      } else {
+        console.warn('Storage 업로드 실패:', await uploadRes.text());
+      }
+    } catch(uploadErr) {
+      console.warn('PDF 업로드 실패 (이메일은 계속):', uploadErr);
+    }
+
     // ③ 서명 링크 생성 (Supabase)
     var signingUrl = null;
     try {
@@ -1007,7 +1039,7 @@ async function doSubmit(recipients) {
       console.warn('링크 생성 실패 (이메일은 계속 발송):', linkErr);
     }
 
-    // ④ 이메일 발송 (서명 링크 + 서류정보만, PDF 첨부 없음)
+    // ④ 이메일 발송 (서명 링크 + PDF 다운로드 링크)
     showLoadingOverlay(true, '이메일 발송 중...');
     var response = await fetch('/api/send-email', {
       method: 'POST',
@@ -1022,6 +1054,7 @@ async function doSubmit(recipients) {
         submitDate: dateStr,
         docCount: allPages.length,
         signingUrl: signingUrl,
+        pdfDownloadUrl: pdfDownloadUrl,
       })
     });
 
@@ -1217,7 +1250,7 @@ function buildPledgeForm(f) {
   +'<tr style="background:#fff3e0;"><td style="text-align:center;font-weight:900;">18</td><td><strong>*무관용의 법칙* 안전수칙 위반 시 경고장 발부 및 터미널 출입금지 조치한다.<br><span style="font-size:10px;">(1회 적발시: 경고, 2회 적발시: 출입금지 3개월)</span></strong></td></tr>'
   +'</tbody></table>'
   +'<div style="font-size:12px;font-weight:700;text-align:center;line-height:1.9;padding:10px;border:1px solid #ccc;background:#fafafa;margin-bottom:12px;">상기 본인은 위 준수사항을 성실하게 이행하겠으며 본인의 과실로 인한 사고 발생 시<br>책임질것을 서약합니다. 안전을 최우선으로 생각하며 안전하게 작업하겠습니다.</div>'
-  +'<div style="text-align:center;font-size:14px;font-weight:700;margin-bottom:14px;letter-spacing:3px;">2 0 <input type="text" placeholder="YY" style="width:28px;border:none;border-bottom:1px solid #999;text-align:center;font-size:13px;font-weight:700;font-family:inherit;background:transparent;"> 년 <input type="text" placeholder="MM" style="width:24px;border:none;border-bottom:1px solid #999;text-align:center;font-size:13px;font-family:inherit;background:transparent;"> 월 <input type="text" placeholder="DD" style="width:24px;border:none;border-bottom:1px solid #999;text-align:center;font-size:13px;font-family:inherit;background:transparent;"> 일</div>'
+  +'<div style="display:flex;justify-content:center;align-items:center;gap:4px;font-size:13px;font-weight:700;margin-bottom:14px;flex-wrap:nowrap;white-space:nowrap;">2 0 <input type="text" id="pledge-yy-'+f.id+'" placeholder="YY" style="width:28px;border:none;border-bottom:1px solid #999;text-align:center;font-size:13px;font-weight:700;font-family:inherit;background:transparent;"> 년 <input type="text" id="pledge-mm-'+f.id+'" placeholder="MM" style="width:24px;border:none;border-bottom:1px solid #999;text-align:center;font-size:13px;font-family:inherit;background:transparent;"> 월 <input type="text" id="pledge-dd-'+f.id+'" placeholder="DD" style="width:24px;border:none;border-bottom:1px solid #999;text-align:center;font-size:13px;font-family:inherit;background:transparent;"> 일</div>'
   +'<div class="info-grid">'
   +'<div class="info-cell"><div class="info-label">공사명</div><input class="info-input" type="text" value="'+proj+'" placeholder="공사명"></div>'
   +'<div class="info-cell"><div class="info-label">소 속</div><input class="info-input" type="text" value="'+comp+'" placeholder="소속"></div>'
