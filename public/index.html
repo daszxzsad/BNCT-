@@ -161,7 +161,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   margin: 0 auto 40px; padding: 40px;
   box-shadow: var(--shadow); border-radius: 4px;
   border: 1px solid var(--gray-200); font-family: 'Noto Sans KR', sans-serif; position: relative;
-  min-height: 1123px; /* A4 높이 고정 (794px 너비 기준 비율) */
   box-sizing: border-box;
 }
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #999; margin-top: 12px; }
@@ -887,6 +886,12 @@ async function doSubmit(recipients) {
       'section3Name': recipients.map(function(r){return r.name;}).join(', ')
     };
 
+    // forms도 PDF 생성 전에 수집 (PDF 캡처 후엔 state 변할 수 있음)
+    var collectedForms = state.forms.map(function(f){
+      return {id:f.id, type:f.type, label:f.label, worker:f.worker||null};
+    });
+    console.log('[BNCT] collectedForms:', JSON.stringify(collectedForms));
+
     // ② PDF 생성
     var jsPDF=window.jspdf.jsPDF;
     var pdf=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
@@ -972,12 +977,19 @@ async function doSubmit(recipients) {
           doc.querySelectorAll('.sig-canvas').forEach(function(c){ c.style.background='#ffffff'; });
         }
       });
-      /* A4 210×297mm에 꽉 차게 (비율 유지, 항상 전체 너비 사용) */
+      /* A4 210×297mm에 꽉 차게, 내용 작으면 여백 */
       var imgData=canvas.toDataURL('image/jpeg',0.92);
       var pdfW=210;
-      var pdfH=Math.min(297, (canvas.height*pdfW)/canvas.width);
+      var pdfH=(canvas.height*pdfW)/canvas.width;
       if(pi>0) pdf.addPage();
-      pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
+      if(pdfH<=297){
+        /* 내용이 A4보다 작으면 → A4 한 장에 위에서부터 넣고 나머지 여백 */
+        pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
+      } else {
+        /* 내용이 A4보다 길면 → 비율 유지하며 축소 */
+        var scale=297/pdfH;
+        pdf.addImage(imgData,'JPEG',0,0,pdfW*scale,297);
+      }
     }
 
     /* 캡처 끝 - 숨긴 요소 복원 */
@@ -1037,7 +1049,7 @@ async function doSubmit(recipients) {
           workerCount: workerCount,
           submitDate: dateStr,
           managers: recipients,
-          forms: state.forms.map(function(f){ return {id:f.id, type:f.type, label:f.label, worker:f.worker||null}; }),
+          forms: collectedForms,
           formData: collectedFormData
         })
       });
