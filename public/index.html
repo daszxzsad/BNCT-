@@ -911,7 +911,9 @@ async function doSubmit(recipients) {
 
       var canvas=await html2canvas(targetPage,{
         scale:2, useCORS:true, allowTaint:true, logging:false,
-        backgroundColor:'#ffffff', windowWidth:794,
+        backgroundColor:'#ffffff',
+        windowWidth: targetPage.scrollWidth + 40,
+        width: targetPage.scrollWidth,
         ignoreElements:function(el){
           return el.classList&&(
             el.classList.contains('app-header')||
@@ -924,50 +926,56 @@ async function doSubmit(recipients) {
           );
         },
         onclone:function(doc){
+          /* input → span 교체 (값 있는 것만) */
           doc.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"]').forEach(function(inp){
+            var s=doc.createElement('span');
             if(inp.value){
-              var s=doc.createElement('span');
               s.textContent=inp.value;
-              s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:inline;overflow:visible;white-space:nowrap;word-break:keep-all;line-height:1.4;padding:0 1px;';
-              inp.parentNode.replaceChild(s,inp);
+              s.style.cssText='font-size:12px;font-family:Noto Sans KR,sans-serif;display:inline-block;width:100%;overflow:visible;white-space:normal;word-break:break-all;line-height:1.5;padding:1px 0;';
             } else {
-              // 값 없는 input도 빈 span으로 교체 (레이아웃 유지)
-              var s=doc.createElement('span');
-              s.style.cssText='display:inline-block;min-width:'+inp.style.width+';';
-              inp.parentNode.replaceChild(s,inp);
+              s.style.cssText='display:inline-block;width:100%;min-height:1em;';
             }
+            inp.parentNode.replaceChild(s,inp);
           });
           doc.querySelectorAll('textarea').forEach(function(ta){
-            if(ta.value){
-              var s=doc.createElement('span');
-              s.textContent=ta.value;
-              s.style.cssText='font-size:11px;font-family:Noto Sans KR,sans-serif;display:block;width:100%;overflow:visible;white-space:pre-wrap;word-break:break-all;line-height:1.4;';
-              ta.parentNode.replaceChild(s,ta);
-            }
+            var s=doc.createElement('span');
+            s.textContent=ta.value||'';
+            s.style.cssText='font-size:12px;font-family:Noto Sans KR,sans-serif;display:block;width:100%;overflow:visible;white-space:pre-wrap;word-break:break-all;line-height:1.5;';
+            ta.parentNode.replaceChild(s,ta);
           });
-          doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ var s=doc.createElement('span'); s.textContent=cb.checked?'☑':'☐'; s.style.cssText='font-size:13px;display:inline-block;'; cb.parentNode.replaceChild(s,cb); });
-          doc.querySelectorAll('input[type="radio"]').forEach(function(rb){ var s=doc.createElement('span'); s.textContent=rb.checked?'●':'○'; s.style.fontSize='12px'; rb.parentNode.replaceChild(s,rb); });
-          /* 모든 td/th 및 부모 컨테이너 overflow 완전 해제 */
-          doc.querySelectorAll('td,th,div,p,span').forEach(function(el){
+          doc.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+            var s=doc.createElement('span');
+            s.textContent=cb.checked?'☑':'☐';
+            s.style.cssText='font-size:13px;display:inline-block;line-height:1;';
+            cb.parentNode.replaceChild(s,cb);
+          });
+          doc.querySelectorAll('input[type="radio"]').forEach(function(rb){
+            var s=doc.createElement('span');
+            s.textContent=rb.checked?'●':'○';
+            s.style.cssText='font-size:12px;display:inline-block;';
+            rb.parentNode.replaceChild(s,rb);
+          });
+          /* 모든 컨테이너 overflow 해제 */
+          doc.querySelectorAll('*').forEach(function(el){
             el.style.overflow='visible';
             el.style.textOverflow='clip';
+            if(el.tagName==='TD'||el.tagName==='TH'){
+              el.style.whiteSpace='normal';
+              el.style.wordBreak='break-word';
+            }
           });
-          doc.querySelectorAll('table').forEach(function(t){ t.style.tableLayout='auto'; });
+          doc.querySelectorAll('table').forEach(function(t){ t.style.tableLayout='fixed'; t.style.width='100%'; });
           doc.querySelectorAll('.app-header,.sidebar,.sig-clear-btn,.sig-expand-modal,.modal-overlay,.loading-overlay,.toast-container').forEach(function(el){ el.remove(); });
           doc.querySelectorAll('.sig-area').forEach(function(a){ a.style.background='#ffffff'; a.style.border='1px solid #ccc'; a.style.overflow='visible'; });
           doc.querySelectorAll('.sig-canvas').forEach(function(c){ c.style.background='#ffffff'; });
         }
       });
-      var imgData=canvas.toDataURL('image/jpeg',0.95);
-      /* A4 = 210×297mm, 비율 유지하며 피팅 */
-      var pdfW=210, pdfH=(canvas.height*pdfW)/canvas.width;
-      if(pdfH>297){
-        /* 내용이 A4보다 길면 → A4 높이에 맞추고 너비도 비례 축소 */
-        var scale297=297/pdfH;
-        pdfH=297; pdfW=210*scale297;
-      }
+      /* A4 210×297mm에 꽉 차게 (비율 유지, 항상 전체 너비 사용) */
+      var imgData=canvas.toDataURL('image/jpeg',0.92);
+      var pdfW=210;
+      var pdfH=Math.min(297, (canvas.height*pdfW)/canvas.width);
       if(pi>0) pdf.addPage();
-      pdf.addImage(imgData,'JPEG',(210-pdfW)/2,0,pdfW,pdfH);
+      pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
     }
 
     /* 캡처 끝 - 숨긴 요소 복원 */
