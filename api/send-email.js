@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
       recipients, ccRecipients,
       fileName,
       projectName, companyName, workerCount, submitDate, docCount,
-      signingUrl
+      signingUrl, pdfDownloadUrl
     } = req.body;
  
     if (!recipients) {
@@ -33,11 +33,22 @@ module.exports = async function handler(req, res) {
     // 서명 링크 HTML - 심플 텍스트 링크
     const signingBtnHtml = signingUrl ? `
       <div style="margin: 20px 0; padding: 16px; border: 1px solid #cccccc; border-radius: 6px; background: #f9f9f9;">
-        <div style="font-size: 14px; font-weight: 700; color: #000000; margin-bottom: 8px;">서명하러 가기</div>
+        <div style="font-size: 14px; font-weight: 700; color: #000000; margin-bottom: 8px;">✏️ 서명하러 가기</div>
         <a href="${signingUrl}" target="_blank" style="font-size: 13px; color: #000000; word-break: break-all;">${signingUrl}</a>
         <div style="margin-top: 6px; font-size: 11px; color: #666666;">링크 유효기간: 7일</div>
       </div>
     ` : '';
+ 
+    const pdfBtnHtml = pdfDownloadUrl ? `
+      <div style="margin: 16px 0; padding: 16px; border: 1px solid #c8e6c9; border-radius: 6px; background: #f1f8f1;">
+        <div style="font-size: 14px; font-weight: 700; color: #000000; margin-bottom: 8px;">📄 PDF 다운로드</div>
+        <a href="${pdfDownloadUrl}" target="_blank" style="font-size: 13px; color: #1b5e20; word-break: break-all;">${pdfDownloadUrl}</a>
+      </div>
+    ` : `
+      <div style="background:#e8f0fe;border-left:4px solid #1565c0;padding:12px 16px;border-radius:4px;font-size:13px;color:#333;margin-bottom:16px;">
+        PDF는 서류 제출 단말기에서 자동 저장되었습니다.
+      </div>
+    `;
  
     const htmlBody = `
       <div style="font-family: 'Noto Sans KR', Arial, sans-serif; max-width: 620px; margin: 0 auto;">
@@ -58,9 +69,7 @@ module.exports = async function handler(req, res) {
             <tr style="background:#f5f7fa;"><td style="padding:10px 16px;font-weight:700;color:#555;border:1px solid #e0e0e0;">제출일시</td><td style="padding:10px 16px;border:1px solid #e0e0e0;">${submitDate}</td></tr>
           </table>
           ${signingBtnHtml}
-          <div style="background:#e8f0fe;border-left:4px solid #1565c0;padding:12px 16px;border-radius:4px;font-size:13px;color:#333;margin-bottom:16px;">
-            PDF는 서류 제출 단말기에서 자동 저장되었습니다.
-          </div>
+          ${pdfBtnHtml}
           <p style="font-size:11px;color:#aaa;margin-top:20px;text-align:center;">
             본 메일은 BNCT 자산관리팀 안전서류 시스템에서 자동 발송되었습니다.
           </p>
